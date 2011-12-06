@@ -1,0 +1,44 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html> <head>
+<script type="application/x-javascript" src="canvastext.js">
+<script type="application/x-javascript">
+function drawLines() {
+    var canvas = document.getElementById('tutorial');
+  
+    if(canvas.getContext) {
+	var ctx = canvas.getContext('2d');
+
+	ctx.fillStyle = "rgb(0, 200,0)";
+        ctx.fillRect (10, 10, 55, 50);
+
+        ctx.fillStyle = "rgba(0, 0, 200, 0.5)";
+        ctx.fillRect (30, 30, 55, 50);
+
+        ctx.fillStyle = "rgba(0, 0, 0, 0)";
+        ctx.beginPath();
+        ctx.moveTo(0, 100);
+        ctx.lineTo(300, 100);
+	ctx.stroke();
+
+
+        CanvasTextFunctions.enable(ctx);
+	var font = "sans";
+	var fontsize = 16;
+	var y = ctx.fontAscent(font,fontsize);
+	ctx.strokeStyle = "rgba(0, 0, 0, 0.75)";
+	ctx.drawTextCenter( font, fontsize, canvas.width/2, y, "Canvas Text Functions");
+
+    }
+}
+</script>
+</script>
+<title>Example of the Canvas</title>
+</head>
+
+<body onload="drawLines();">
+
+<canvas id="tutorial" width="400" height="400">
+  No support for JavaScript canvas
+</canvas>
+
+</body> </html>

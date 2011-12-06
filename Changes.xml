@@ -1,0 +1,59 @@
+<changelog xmlns:omg="http://www.omegahat.org">
+
+<version id="0.5-0">
+<change>
+Added an IdentifyDevice example which stores the system calls in effect
+when each primitive is invoked in the graphics device.
+This can be used to help identify elements in a plot. See <omg:pkg>SVGAnnotation</omg:pkg>
+and the JavaScript canvas example.
+</change>
+</version>
+
+<version id="0.4-0">
+<change>
+Added a GEInitDevice function as part of the RDevDescMethods.  This is
+different from the initDevice methods as that is called after the
+device is created, while GEInitDevice is called after the device is
+registered with the Graphics Engine in R. Specifically, the device has
+been attached to a GEDevDesc data structure in C and so we can set the
+display list settings, and whether to ask when moving to a new frame.
+</change>
+<change>
+The values of the ipr parameter are used to set the corresponding
+field when the device is created. This removes the need to set
+these in the initDevice method.
+</change>
+
+<change>
+Added default definitions for strWidth and metricInfo methods in 
+RDevDescMethods.
+</change>
+
+<change>
+Introduced class for GEDevDesc reference and coercion method
+to convert a DevDescPtr to a GEDevDesc. This allows us to set
+options for enabling the display list and asking the viewer
+to confirm moving to a new "page".
+</change>
+
+<change>
+Added a pieceDevice example device that collects the primitive
+operations so that we can analyze/post-process them to identify
+the different higher-level components in a  plot, e.g. axis, 
+panels, title, axes labels.
+</change>
+
+</version>
+
+<version>
+<change>
+Added DegenerateDeviceFunction class to be able to determine if a function
+is the standard default one.
+</change>
+
+<change>Added accessor for slot "state" in the RDevDescMethodsPtr - 
+get and set methods.
+</change>
+
+</version>
+</changelog>

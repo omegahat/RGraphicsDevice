@@ -1,0 +1,225 @@
+<?xml version="1.0"?>
+<article xmlns:r="http://www.r-project.org"
+         xmlns:xi="http://www.w3.org/2003/XInclude">
+
+<articleinfo>
+
+<title></title>
+
+<author><firstname>Duncan</firstname><surname>Temple Lang</surname>
+  <affiliation><orgname>University of California at Davis</orgname>
+               <orgdiv>Department of Statistics</orgdiv>
+  </affiliation>
+</author>
+</articleinfo>
+
+<section>
+<title></title>
+
+
+<para>
+Here we create a single plot and then retrieve the axes.
+<r:code>
+e = test(plot(1:10))
+x = getAxes(e)
+length(x)
+getLabels(e)
+</r:code>
+
+</para>
+<para>
+
+Here we add a title to the plot and also an axis on the top of the
+plot.
+
+<r:code>
+e = test({ plot(1:10, main = "A title"); axis(3, at = c(2, 4, 9), c("ABC", "DEF", "GHI"))})
+x = getAxes(e)
+length(x)  # 3 
+getLabels(e) 
+</r:code>
+
+</para>
+<para>
+
+
+<r:code>
+e = test({plot(1:10); axis(side = 3, at = 1:10); title("My Plot"); legend(1, 10, c("A", "B", "CD"), lty = 1:3)})
+x = getAxes(e)
+length(x)
+</r:code>
+
+</para>
+<para>
+
+
+
+<r:code>
+e = test({par(mfrow = c(1, 2)); plot(1:10, main = "My Title"); plot(density(rnorm(10)))})
+o = getPlotRegionNodes(e)
+names(o)
+</r:code>
+
+</para>
+<para>
+
+<r:code>
+e = test(matplot(replicate(9, rnorm(10), simplify = TRUE), type = "l"))
+</r:code>
+
+</para>
+<para>
+
+<r:code>
+e = test({  
+ m = matrix(c(2, 2, 0,
+              1, 1, 3,
+              1, 1, 3), 3,3, byrow = TRUE)
+ layout(m)
+ x = rnorm(100)
+ y = 10 + 3*x + rnorm(100)
+ plot(x, y)
+ plot(density(x), xlab = "", ylab = "")
+ d = density(y)
+ plot(d$y, d$x, type = "l", xlab = "", ylab = "")
+})
+
+p = getPlotRegionNodes(e)
+names(p)
+
+   # Scatterplot
+x = getAxes(p[[1]])
+x[[1]]@tickLabels
+x[[2]]@tickLabels
+
+pts = getPlotPoints(p[[1]])
+</r:code>
+
+</para>
+</section>
+
+
+
+
+<section id="lattice">
+<title></title>
+
+<para>
+
+A simple lattice plot with panels
+<r:code>
+library(lattice)
+data(mtcars)
+e = test(xyplot(mpg ~ wt | cyl, mtcars))
+</r:code>
+
+
+<r:code>
+g = getLatticeComponents(e)
+</r:code>
+
+</para>
+
+<para>
+
+A similar plot but this time the strips will have labels
+and not a marker for the level of the "continuous" variable:
+<r:code>
+xyplot(mpg ~ wt | factor(cyl), mtcars)
+</r:code>
+
+
+</para>
+
+
+
+<para>
+
+A simple lattice plot with two conditioning variables
+<r:code>
+e = test(xyplot(mpg ~ wt | cyl + am, mtcars))
+</r:code>
+
+</para>
+
+
+
+
+
+
+<section id="legend">
+<title></title>
+
+<para>
+
+<r:code>
+
+e = test(xyplot(mpg ~ wt | cyl, mtcars, group = gear, auto.key = list(columns = 3)))
+</r:code>
+
+</para>
+</section>
+
+
+</section>
+
+<section id="pch">
+
+<para>
+Different plotting  characters.
+<r:code>
+e = test(plot(rep(1:5, 5), rep(1:5, each = 5), pch = 1:25, axes = FALSE, xlab = "", ylab = ""))
+</r:code>
+How can we identify these as pseudo text rather than a sequence of lines.
+</para>
+
+</section>
+
+
+<section>
+<title>Exploring the Structures</title>
+
+<para>
+
+
+<r:code>
+dev = pieceDevice()
+par(mfrow =c(2,3))
+plot(1:10)
+plot(density(rnorm(1000)))
+boxplot(mtcars, main = "Distribution of variables")
+legend(2, 2, names(mtcars), lty = 2)
+plot(1:10)
+dev.off()
+e = dev$pages()
+
+
+table(unlist(sapply(e[[1]], `[[`, "calls")))
+i = sapply(e[[1]], `[[`, "isDataRegionElement")
+table(i)
+
+table(sapply(e[[1]][!i], `[[`, "type")  )
+table(sapply(e[[1]][i], `[[`, "type")  )
+</r:code>
+</para>
+
+<para>
+
+      # look at a boxplot
+<r:code>
+if(FALSE) {      
+  dev = pieceDevice()
+  boxplot(mtcars, main = "Distribution of variables")
+  dev.off()
+  e = dev$pages()
+  sapply(e[[1]], `[[`, "isDataRegionElement")
+  table(sapply(e[[1]][i], `[[`, "type"))
+  table(sapply(e[[1]][!i], `[[`, "type"))    # 11 variables names, 5 labels on the vert. axis and   the title
+  unlist(lapply(e[[1]][!i], `[[`, "text"))
+}
+</r:code>
+
+</para>
+</section>
+
+</article>

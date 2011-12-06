@@ -1,0 +1,33 @@
+useDynLib(RGraphicsDevice)
+
+import(RAutoGenRunTime)
+
+export(graphicsDevice)
+exportMethods(graphicsDevice)
+
+export(deviceName)
+exportMethods(deviceName)
+
+
+export(makeGraphicsDeviceObject)
+export(dummyDevice)
+
+exportClasses(DevDescPtr, DevDesc, 
+              RDevDescMethods, RDevDescMethodsPtr, 
+              RGB, GEDevDescPtr)
+exportMethods("[[")
+exportMethods("$")
+exportMethods("$<-")
+
+
+
+exportClasses(R_GE_gcontext, R_GE_gcontextPtr)
+export("GE_ROUND_JOIN", "GE_MITRE_JOIN", "GE_BEVEL_JOIN")
+export("GE_ROUND_CAP", "GE_BUTT_CAP", "GE_SQUARE_CAP")
+
+
+export(isTransparent)
+
+exportClass("DegenerateDeviceFunction")
+
+

@@ -1,0 +1,21 @@
+We can make this go a little faster by building the expressions
+to call the device functions just once, not each time we invoke
+the function.  This will avoid the overhead of creating the 
+expression each time. When we want to invoke the function,
+we fill in the arguments and evaluate the expression.
+
+Rather than walking the expression and filling in the values, we
+can also store points to the values, e.g.
+
+typedef struct  {
+  SEXP call;
+  double *x;
+  double *y;
+  double *r;
+  void **gcontext; 
+  void **device;
+} R_CircleCall;
+
+When we create the expression, we assign the value to 
+call and then the assign the locations of the real numbers
+and external pointer payloads to the different fields in our structure.

@@ -1,0 +1,26 @@
+Package: RGraphicsDevice
+Title: A framework for developing R graphics devices entirely in R
+Description: This package provides a framework that allows one to 
+  program an R graphics device entirely within R, i.e. using R functions.
+  The motivation is to allow rapid prototyping of graphics devices for new
+  formats/targets to be done by those not as familiar with the C--evel details
+  of R graphics devices.  An example is a Flash graphics device, i.e. that 
+  creates graphical output as Flex/ActionScript code. Another is a device that generates
+  JavaScript code that renders on a JavaScript canvas (see https://developer.mozilla.org/en/Canvas_tutorial).
+  We can then annotate the output from such devices to make them interactive. 
+  See the SVGAnnotation package for an example.
+Version: 0.5-0
+Imports: RAutoGenRunTime
+Depends: methods, RAutoGenRunTime
+Author: Duncan Temple Lang
+Maintainer: Duncan Temple Lang <duncan@r-project.org>
+License: GPL2
+Collate: classes.R  rgb.R 
+         lend.R ljoin.R GContext.R 
+         devDescMethods.R RDevDesc.R
+         gd.R zClasses.R
+         GEDevDesc.R
+
+Extra:         withType.R
+
+

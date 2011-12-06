@@ -1,0 +1,765 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>A Guide to Implementing an R Graphics Device with the RGraphicsDevice package</title><link rel="stylesheet" type="text/css" href="/Users/duncan/Classes/StatComputing/XDynDocs/inst/CSS/OmegaTech.css"></link><meta name="generator" content="DocBook XSL Stylesheets V1.76.1"></meta>
+<link xmlns="" rel="stylesheet" type="text/css" href="http://yui.yahooapis.com/2.8.0r4/build/tabview/assets/skins/sam/tabview.css">
+<script xmlns="" type="text/javascript" src="http://yui.yahooapis.com/2.8.0r4/build/yahoo-dom-event/yahoo-dom-event.js"></script>
+<script xmlns="" type="text/javascript" src="http://yui.yahooapis.com/2.8.0r4/build/element/element-min.js"></script>
+<script xmlns="" type="text/javascript" src="http://yui.yahooapis.com/2.8.0r4/build/tabview/tabview-min.js"></script>
+<script xmlns="" type="text/javascript" src="/Users/duncan/Classes/StatComputing/XDynDocs/inst/JavaScript/yahooTabUtils.js"></script>
+<script xmlns="" type="text/javascript" src="http://www.omegahat.org/DynDocs/JavaScript/toggleHidden.js"></script>
+</head><body class="yui-skin-sam">
+<script xmlns="" type="text/javascript"><!--
+var toggleCodeIds = [
+ 
+   "id36293120", 
+   "id36293176", 
+   "id36293310", 
+   "id36293362", 
+   "id36293381", 
+   "id36293391", 
+   "id36293397", 
+   "id36293519", 
+   "id36293626", 
+   "id36293717", 
+   "id36293772", 
+   "id36293778", 
+   "id36293800", 
+   "id36293809", 
+   "id36293959", 
+   "id36293971"
+];
+--></script><p xmlns=""></p>
+<div class="article" title="A Guide to Implementing an R Graphics Device with the RGraphicsDevice package"><div class="titlepage"><div><div><h2 class="title"><a id="id36046371"></a>A Guide to Implementing an R Graphics Device with the <a xmlns:omg="http://www.omegahat.org" xmlns:rwx="http://www.omegahat.org/RwxWidgets" xmlns="" href="http://www.omegahat.org/RGraphicsDevice">RGraphicsDevice</a> package</h2></div></div><hr></hr></div><div class="section" title="Introduction"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="id36242681"></a>Introduction</h2></div></div></div><p>
+The idea is that we provide this package so that others can write new
+graphics devices entirely in R.  An R programmer might create an SVG
+or Flash graphics device by writing R functions that implement the
+different graphical primitive operations needed by an R graphics
+device.
+
+</p><p>
+To create a running graphics device with our own functions, we call
+the <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rfunc"><a href="Help//graphicsDevice.html">graphicsDevice()
+  </a></i> function.  While there are several
+methods for this, essentially we give it a list of named functions
+that specify the implementation of some or all of the 21 graphical
+primitive operations.  We might give this as a list or as an instance
+of <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns=""><a href="Help/RDevDescMethods-class.html">RDevDescMethods</a></i> or of a sub-class that we define
+for a particular type of device.
+So we focus on writing these functions.
+</p><p>
+The names of the functions can be found with 
+</p><pre xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="routput">
+ [1] "activate"        "circle"          "clip"            "close"          
+ [5] "deactivate"      "locator"         "line"            "metricInfo"     
+ [9] "mode"            "newPage"         "polygon"         "polyline"       
+[13] "rect"            "size"            "strWidth"        "text"           
+[17] "onExit"          "getEvent"        "newFrameConfirm" "textUTF8"       
+[21] "strWidthUTF8"   
+</pre>
+<p>
+Almost every graphics device will need to implement circle, line,
+rect, polygon, polyline, text and strWidth.  For non-interactive
+graphics devices, e.g.  those creating files that are displayed in a
+separate step, we don't need to implement locator, activate,
+deactivate, mode, getEvent.  onExit is also probably not necessary but
+can be of value for recovering from errors in evaluating code that
+produces graphics.  If we can handle UTF8 encoded strings, we can
+implement textUTF8 and strWidthUTF8, but this is not imperative.
+metricInfo allows the device to return information about the
+size of a character. A device does not have to provide this information.
+</p><p>
+So now we must implement each of the important functions needed
+by our new device. To do this, we need the signatures,
+i.e. the number and the type of the arguments they will be passed
+when the R graphics engine invokes these.
+These are given in the following 
+with the name of the method and the comma-separate
+list of the R types of the parameters, and the number of parameters 
+on the right:
+</p><div class="table"><a id="id36292860"></a><p class="title"><strong>Table 1. Signatures of the device operations</strong></p><div class="table-contents"><table summary="Signatures of the device operations" border="1"><colgroup><col class="a"></col><col align="center" class="b"></col></colgroup><thead><tr><th>signature</th><th align="center"># parameters</th></tr></thead><tbody><tr><td>activate ( DevDescPtr )</td><td align="center">  1</td></tr><tr><td>circle ( numeric, numeric, numeric, R_GE_gcontextPtr, DevDescPtr )</td><td align="center">  5</td></tr><tr><td>clip ( numeric, numeric, numeric, numeric, DevDescPtr )</td><td align="center">  5</td></tr><tr><td>close ( DevDescPtr )</td><td align="center">  1</td></tr><tr><td>deactivate ( DevDescPtr )</td><td align="center">  1</td></tr><tr><td>getEvent ( ANY, character )</td><td align="center">  2</td></tr><tr><td>line ( numeric, numeric, numeric, numeric, R_GE_gcontextPtr, DevDescPtr )</td><td align="center">  6</td></tr><tr><td>locator ( numeric, numeric, DevDescPtr )</td><td align="center">  3</td></tr><tr><td>metricInfo ( integer, R_GE_gcontextPtr, numeric, numeric, numeric, DevDescPtr )</td><td align="center">  6</td></tr><tr><td>mode ( integer, DevDescPtr )</td><td align="center">  2</td></tr><tr><td>newFrameConfirm ( DevDescPtr )</td><td align="center">  1</td></tr><tr><td>newPage ( R_GE_gcontextPtr, DevDescPtr )</td><td align="center">  2</td></tr><tr><td>onExit ( DevDescPtr )</td><td align="center">  1</td></tr><tr><td>polygon ( integer, doublePtr, doublePtr, R_GE_gcontextPtr, DevDescPtr )</td><td align="center">  5</td></tr><tr><td>polyline ( integer, doublePtr, doublePtr, R_GE_gcontextPtr, DevDescPtr )</td><td align="center">  5</td></tr><tr><td>rect ( numeric, numeric, numeric, numeric, R_GE_gcontextPtr, DevDescPtr )</td><td align="center">  6</td></tr><tr><td>size ( doublePtr, doublePtr, doublePtr, doublePtr, DevDescPtr )</td><td align="center">  5</td></tr><tr><td>strWidth ( character, R_GE_gcontextPtr, DevDescPtr )</td><td align="center">  3</td></tr><tr><td>strWidthUTF8 ( character, R_GE_gcontextPtr, DevDescPtr )</td><td align="center">  3</td></tr><tr><td>text ( numeric, numeric, character, numeric, numeric, R_GE_gcontextPtr, DevDescPtr )</td><td align="center">  7</td></tr><tr><td>textUTF8 ( numeric, numeric, character, numeric, numeric, R_GE_gcontextPtr, DevDescPtr )</td><td align="center">  7</td></tr></tbody></table></div></div><p><br class="table-break"></br>
+The choice of parameter names  is entirely up to you.
+</p><p>
+The next topic we need to discuss is the set of classes
+that are new to R programmers and provided as part of this
+package. 
+These are <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns=""><a href="Help/DevDescPtr-class.html">DevDescPtr</a></i>, <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns=""><a href="Help/R_GE_gcontextPtr-class.html">R_GE_gcontextPtr</a></i>,
+<i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns=""><a href="Help/doublePtr-class.html">doublePtr</a></i>.  The class <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns=""><a href="Help/ANY-class.html">ANY</a></i> used in
+<i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rfunc"><a href="Help//getEvent.html">getEvent()
+  </a></i> means what it says, i.e. any R object.
+</p><p>
+Each of the methods is passed an object of class
+<i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns=""><a href="Help/DevDescPtr-class.html">DevDescPtr</a></i>.  This is also the type of the value
+returned by the top-level function <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rfunc"><a href="Help//graphicsDevice.html">graphicsDevice()
+  </a></i>.
+This is a reference the C-level data structure that represents the
+graphics device.  We can use this to query the settings of the
+graphics device.  Some of these fields in the device are used when
+initializing the device rather than within the functions (e.g. those
+whose names are prefixed with "start"). Other fields are structural
+information about the rendering of different aspects of the
+device. For example, we can find the dimensions of the drawing area,
+The <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns=""><a href="Help/DevDescPtr-class.html">DevDescPtr</a></i> class is essentially an opaque data
+type in R (containing an external pointer to the C-level data
+structure) and is intended to be used as if it were an R-level
+list. We can use the <code xmlns:rs="http://www.omegahat.org/RS" xmlns:s="http://cm.bell-labs.com/stat/S4" xmlns="" class="sfunction">$</code> operator to access individual
+fields and we can find the names of these fields with
+<i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rfunc"><a href="Help//names.html">names()
+  </a></i>. These are
+</p><pre xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="routput">
+ [1] "left"                    "right"                  
+ [3] "bottom"                  "top"                    
+ [5] "clipLeft"                "clipRight"              
+ [7] "clipBottom"              "clipTop"                
+ [9] "xCharOffset"             "yCharOffset"            
+[11] "yLineBias"               "ipr"                    
+[13] "cra"                     "gamma"                  
+[15] "canClip"                 "canChangeGamma"         
+[17] "canHAdj"                 "startps"                
+[19] "startcol"                "startfill"              
+[21] "startlty"                "startfont"              
+[23] "startgamma"              "deviceSpecific"         
+[25] "displayListOn"           "canGenMouseDown"        
+[27] "canGenMouseMove"         "canGenMouseUp"          
+[29] "canGenKeybd"             "gettingEvent"           
+[31] "hasTextUTF8"             "wantSymbolUTF8"         
+[33] "useRotatedTextInContour"
+</pre>
+<p>
+Under some rare circumstances, it is convenient to convert the reference
+to an R object.  We can do this by coercing it to the corresponding
+R class named <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns=""><a href="Help/DevDesc-class.html">DevDesc</a></i> (i.e. with the "Ptr" remove),
+i.e. <code xmlns:rs="http://www.omegahat.org/RS" xmlns:s="http://cm.bell-labs.com/stat/S4" xmlns="" class="Sexpression">as(dev, "DevDesc")</code>.  This copies each of the fields
+in the C-level structure to the corresponding slot in the R class.
+</p><p>
+The second of these classes is <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns=""><a href="Help/R_GE_gcontextPtr-class.html">R_GE_gcontextPtr</a></i>.
+This is another reference to an instance of a C-level data type.
+This is the information about the "current" settings of the
+device. This gives us information about the current pen/foreground color,
+the background color, the setting for the gamma level, the line
+width, style, join, the character point size and expansion/magnification, 
+and the font information.
+The available fields  are
+</p><div xmlns="" class="codeToggle"><div class="unhidden" id="id36293120"><div><pre class="rcode" title="R code">
+names(new("R_GE_gcontextPtr"))
+<pre class="routput">
+ [1] "col"        "fill"       "gamma"      "lwd"        "lty"       
+ [6] "lend"       "ljoin"      "lmitre"     "cex"        "ps"        
+[11] "lineheight" "fontface"   "fontfamily"
+</pre>
+</pre></div></div></div>
+<div xmlns="" class="clearFloat"></div>
+<p>
+These are the values that your graphics device must reflect when it
+renders the display. These control the colors, line characteristics
+and fonts. 
+</p><p>
+Many of these fields are scalar values.  <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rslot">lend</i> and
+<i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rslot">ljoin</i> are special types that are enumeration
+constants.  These identify particular types of line endings and line
+joins.  <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rslot">fontfamily</i> is a character vector with 201
+individual characters.
+</p><p>
+The one other class of parameter is <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns=""><a href="Help/doublePtr-class.html">doublePtr</a></i>.
+This is a simple reference to an R numeric vector.  The only thing
+that is needed to convert this to a numeric vector is the number of
+elements. In the two methods (<i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rfunc"><a href="Help//polyline.html">polyline()
+  </a></i> and
+<i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rfunc"><a href="Help//polygon.html">polygon()
+  </a></i>), we are given the length of the vector in
+the first parameter. This allows us to convert these references to R
+numeric vectors as <code xmlns:rs="http://www.omegahat.org/RS" xmlns:s="http://cm.bell-labs.com/stat/S4" xmlns="" class="Sexpression"> x[ 1 : n ]</code> where <b xmlns:rs="http://www.omegahat.org/RS" xmlns:s="http://cm.bell-labs.com/stat/S4" xmlns="" class="$">n</b>
+is the length of the vector.
+</p><p>
+So now that we know about the types in the functions, we can start to
+define the methods for a particular type of graphics device.  We'll focus on
+what these functions might do later. But first we'll talk about how we
+gather them together to form a device.  We can collect these functions
+in an instance of the <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns=""><a href="Help/RDevDescMethods-class.html">RDevDescMethods</a></i> class.  We
+first create an instance and then set the slots, e.g.
+</p><div xmlns="" class="codeToggle"><div class="unhidden" id="id36293176"><div><pre class="rcode" title="R code">
+funs = new("RDevDescMethods")
+
+funs@activate = function(dev) { cat("Activating the device\n") }
+funs@line = 
+ function(x1, y1, x1, y1, gcontext, dev) {
+      # do something to render the line
+ }
+</pre></div></div></div>
+<div xmlns="" class="clearFloat"></div>
+<p>
+Alternatively, we can collect the functions into a list and 
+coerce this to an <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns=""><a href="Help/RDevDescMethods-class.html">RDevDescMethods</a></i>.
+And when we are exploring an implementation, we might want
+to use functions that print the name of the method each time the are called.
+<i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rfunc"><a href="Help//dummyDevice.html">dummyDevice()
+  </a></i> creates such an instance.
+</p><div class="section" title="Initialization via initDevice()"><div class="titlepage"><div><div><h3 class="title"><a id="id36293190"></a>Initialization via <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rfunc"><a href="Help//initDevice.html">initDevice()
+  </a></i></h3></div></div></div><p>
+In addition to the twenty one graphical primitive methods in
+<i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns=""><a href="Help/RDevDescMethods-class.html">RDevDescMethods</a></i>, there is also
+<i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rfunc"><a href="Help//initDevice.html">initDevice()
+  </a></i> that is not called by the R graphics
+engine. If this is not <i xmlns:rs="http://www.omegahat.org/RS" xmlns:s="http://cm.bell-labs.com/stat/S4" xmlns=""><code>NULL</code></i>, we call this just after creating the
+<i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns=""><a href="Help/DevDescPtr-class.html">DevDescPtr</a></i> object in C but before initializing and
+registering the device with the R graphics engine. This is an
+opportunity to set different fields in <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns=""><a href="Help/DevDescPtr-class.html">DevDescPtr</a></i>
+such as the <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rslot">col</i> and <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rslot">fill</i> that are
+propagated through the graphics system when the device is initialized.
+Some of these parameters (<i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rarg">col</i>, <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rarg">fill</i>,
+<i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rarg">ps</i>) can be specified directly in the call to
+<i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rfunc"><a href="Help//graphicsDevice.html">graphicsDevice()
+  </a></i> and if we are just setting these, we
+do not need a function for <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rfunc"><a href="Help//initDevice.html">initDevice()
+  </a></i>.  However, if
+we need to set additional fields, we can do so before the device is
+initialized by the graphics engine with
+<i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rfunc"><a href="Help//initDevice.html">initDevice()
+  </a></i>. Alternatively, if we can set the fields
+of interest after the device is registered, we can do so directly with
+the return value of the call to <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rfunc"><a href="Help//graphicsDevice.html">graphicsDevice()
+  </a></i>.
+</p></div><p>
+We should note that calling R functions from C is more expensive
+than calling C routines from C. Also, some of the
+operations that graphical primitive functions can
+be time consuming and implementing them in R
+can be very slow. For example, drawing many, m
+</p></div><div class="section" title="Examples"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="id36293259"></a>Examples</h2></div></div></div><p>
+The package contains two example devices.
+They do not produce polished graphics, but serve as prototypes
+for other to hopefully take and complete.
+These are in <code class="dir">examples/JavaScriptCanvas</code>/
+ and <code class="dir">examples/SVG</code>/
+1
+</p><div class="section" title="Drawing on the JavaScript Canvas"><div class="titlepage"><div><div><h3 class="title"><a id="id36293276"></a>Drawing on the JavaScript Canvas</h3></div></div></div><p>
+Several browsers provide a <font xmlns:html="http://www.w3.org/TR/html401" xmlns="" class="htmlTag">canvas</font> element for
+HTML documents and we can use this and JavaScript to draw within the
+canvas' area within the HTML document.  Information about the API for
+the JavaScript canvas is available at <a class="ulink" href="https://developer.mozilla.org/en/drawing_graphics_with_canvas" target="_top">https://developer.mozilla.org/en/drawing_graphics_with_canvas</a>
+</p><p>
+The file Rjs.R in <code class="dir">examples/JavaScriptCavas</code>/
+ contains
+the code that implements the device <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rfunc"><a href="Help//jsCanvas.html">jsCanvas()
+  </a></i>
+and also a related derived device that creates HTML documents, <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rfunc"><a href="Help//htmlCanvas.html">htmlCanvas()
+  </a></i>.
+We'll look at the <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rfunc"><a href="Help//jsCanvas.html">jsCanvas()
+  </a></i> first.
+It is defined as
+</p><div xmlns="" class="codeToggle"><div class="unhidden" id="id36293310"><div><pre class="rcode" title="R code">
+jsCanvas =
+function(file, dim = c(1000, 800), col = "black", ps = 10, wrapup = writeCode, ...)
+{
+}
+</pre></div></div></div>
+<div xmlns="" class="clearFloat"></div>
+<p>
+The <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rarg">file</i> specifies the connection or file name to which
+the generated JavaScript code should be written when the device is
+closed.  This can also be a quoted expression (created by
+<i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rfunc"><a href="Help//quote.html">quote()
+  </a></i> or <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rfunc"><a href="Help//expression.html">expression()
+  </a></i>) giving the R
+graphics commands. In this case, the plot will be created and the
+generated code will be returned directly rather than being written to
+a file.
+</p><p>
+The <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rarg">dim</i>, <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rarg">col</i> and <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rarg">ps</i>
+parameters are passed on directly to <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rfunc"><a href="Help//graphicsDevice.html">graphicsDevice()
+  </a></i>
+to initialize its state.  We'll return to <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rarg">wrapup</i> later,
+but suffice to say that it is called to post-process the generated
+JavaScript code and write it to the connection, if appropriate.
+</p><p>
+The body of the <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rfunc"><a href="Help//jsCanvas.html">jsCanvas()
+  </a></i> starts by creating
+a list (<b xmlns:rs="http://www.omegahat.org/RS" xmlns:s="http://cm.bell-labs.com/stat/S4" xmlns="" class="$">pages</b>) in which the generated code for the different plots will be stored,
+with a character vector for each separate plot. The code for the current plot being created is stored in
+<b xmlns:rs="http://www.omegahat.org/RS" xmlns:s="http://cm.bell-labs.com/stat/S4" xmlns="" class="$">commands</b>. 
+</p><div xmlns="" class="codeToggle"><div class="unhidden" id="id36293362"><div><pre class="rcode" title="R code">
+  pages = list()
+  commands = character()
+</pre></div></div></div>
+<div xmlns="" class="clearFloat"></div>
+<p>
+Each of the graphical primitive functions for the device add their code
+to the <b xmlns:rs="http://www.omegahat.org/RS" xmlns:s="http://cm.bell-labs.com/stat/S4" xmlns="" class="$">commands</b> vector as they are called.
+When the plot is completed, either when the device is closed
+or when we start a new plot, the approriate method
+calls <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rfunc"><a href="Help//endPage.html">endPage()
+  </a></i> which moves the code for the current plot 
+from <b xmlns:rs="http://www.omegahat.org/RS" xmlns:s="http://cm.bell-labs.com/stat/S4" xmlns="" class="$">commands</b> into <b xmlns:rs="http://www.omegahat.org/RS" xmlns:s="http://cm.bell-labs.com/stat/S4" xmlns="" class="$">pages</b>.
+</p><div xmlns="" class="codeToggle"><div class="unhidden" id="id36293381"><div><pre class="rcode" title="R code">
+  add = function(x)
+    commands &lt;&lt;- c(commands, x)
+
+  endPage = function() {
+      if(length(commands)) {
+         pages[[ length(pages) + 1 ]] &lt;&lt;- commands
+         commands &lt;&lt;- character()
+      }
+  }
+</pre></div></div></div>
+<div xmlns="" class="clearFloat"></div>
+<p>
+These are helper functions that organize the generated code. We
+now move on to the functions implementing the graphical operations.
+</p><p>
+We start by creating a dummy device
+</p><div xmlns="" class="codeToggle"><div class="unhidden" id="id36293391"><div><pre class="rcode" title="R code">
+  funs = as(dummyDevice(), "RJavaScriptCanvasMethods")
+</pre></div></div></div>
+<div xmlns="" class="clearFloat"></div>
+<p>
+We don't implement several of the functions, so we assign them
+the value <i xmlns:rs="http://www.omegahat.org/RS" xmlns:s="http://cm.bell-labs.com/stat/S4" xmlns=""><code>NULL</code></i>:
+</p><div xmlns="" class="codeToggle"><div class="unhidden" id="id36293397"><div><pre class="rcode" title="R code">
+  funs@mode = NULL
+  funs@metricInfo = NULL
+  funs@activate = NULL
+  funs@deactivate = NULL
+  funs@deactivate = NULL
+  funs@locator = NULL
+  funs@onExit = NULL
+</pre></div></div></div>
+<div xmlns="" class="clearFloat"></div>
+<p>
+</p><p>
+We can specify the important device settings such as initial
+color and point size directly via <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rfunc"><a href="Help//graphicsDevice.html">graphicsDevice()
+  </a></i>
+and in our <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rfunc"><a href="Help//jsCanvas.html">jsCanvas()
+  </a></i>.
+However, we might also want to specify addition device settings.
+We can do this after the call to <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rfunc"><a href="Help//graphicsDevice.html">graphicsDevice()
+  </a></i>
+using the <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns=""><a href="Help/DevDescPtr-class.html">DevDescPtr</a></i> object it returns.
+Alternatively, we can have R call an <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rfunc"><a href="Help//initDevice.html">initDevice()
+  </a></i>
+function we provide and this is called after we create the device
+and set its methdods, but before the device is passed back to the
+R graphics engine to initialize the state, e.g. the <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rfunc"><a href="Help//par.html">par()
+  </a></i>
+settings.
+So we might have a function of the form:
+</p><pre xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rfunction">
+  funs@initDevice = function(dev) {
+
+       # The all important parameter to set ipr to get the plot region with adequate margins
+    dev$ipr = rep(1/72.27, 2)
+    dev$cra = rep(c(6, 13)/12) * 10
+    dev$canClip = TRUE
+    dev$canChangeGamma = TRUE
+    dev$startgamma = 1
+    dev$startps = 10
+    dev$startcol = as("black", "RGBInt")
+  }
+</pre>
+<p><br xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="">
+</p><p>
+Now we move on to the functions that actually generate content.
+We'll start with drawing a line. 
+We are passed the coordinates of the two end points,
+the current graphical context and the device.
+We generate JavaScript code to set the JavaScript drawing
+parameters/context and then draw the line.
+We do this by creating  path, moving to the starting point
+and drawing a line to the end point.
+</p><pre xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rfunction">
+funs@line = function(x1, y1, x2, y2, context, dev) {
+    add(c("// line",
+          "ctx.beginPath();",
+          setContext(context),
+          sprintf("ctx.moveTo(%s, %s);", as.integer(x1), as.integer(y1)),
+          sprintf("ctx.lineTo(%s, %s);", as.integer(x2), as.integer(y2)),
+          "ctx.stroke();"))
+}
+</pre>
+<p><br xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="">
+The code is appended to <b xmlns:rs="http://www.omegahat.org/RS" xmlns:s="http://cm.bell-labs.com/stat/S4" xmlns="" class="$">commands</b> via the <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rfunc"><a href="Help//add.html">add()
+  </a></i>.
+Since this is a shared vector (as is <b xmlns:rs="http://www.omegahat.org/RS" xmlns:s="http://cm.bell-labs.com/stat/S4" xmlns="" class="$">pages</b>), we
+define the <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rfunc"><a href="Help//add.html">add()
+  </a></i> function in the scope of our 
+call to <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rfunc"><a href="Help//jsCanvas.html">jsCanvas()
+  </a></i>, and we define our 
+graphics operator functions in that same lexical scope to be able to access
+<i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rfunc"><a href="Help//add.html">add()
+  </a></i>.
+</p><p>
+The function <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rfunc"><a href="Help//setContext.html">setContext()
+  </a></i> takes the R graphics context
+(of class <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns=""><a href="Help/R_GE_gcontextPtr-class.html">R_GE_gcontextPtr</a></i>) and generates 
+JavaScript code to set the JavaScript graphics context accordingly.
+Since this just returns the generated code and it is then passed
+to <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rfunc"><a href="Help//add.html">add()
+  </a></i>, the <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rfunc"><a href="Help//setContext.html">setContext()
+  </a></i> function
+does not need access to <b xmlns:rs="http://www.omegahat.org/RS" xmlns:s="http://cm.bell-labs.com/stat/S4" xmlns="" class="$">commands</b> and so is defined
+outside of <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rfunc"><a href="Help//jsCanvas.html">jsCanvas()
+  </a></i>.
+We'll return to it later as  it illustrates some additional facilities
+of <a xmlns:omg="http://www.omegahat.org" xmlns:rwx="http://www.omegahat.org/RwxWidgets" xmlns="" href="http://www.omegahat.org/RGraphicsDevice">RGraphicsDevice</a> that are useful.
+</p><p>
+To draw a rectangle, we can use the built-in JavaScript functions
+<code xmlns:xp="http://www.w3.org/TR/xpath" xmlns:ecma="http://www.ecma-international.org/publications/standards/Ecma-262.htm" xmlns:js="http://www.ecma-international.org/publications/standards/Ecma-262.htm" xmlns="" class="jsFunc">strokeRect</code> or <code xmlns:xp="http://www.w3.org/TR/xpath" xmlns:ecma="http://www.ecma-international.org/publications/standards/Ecma-262.htm" xmlns:js="http://www.ecma-international.org/publications/standards/Ecma-262.htm" xmlns="" class="jsFunc">fillRect</code>.
+The former draws just the border and the latter fills in the entire area.
+Which we  use depends on whether the <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rslot">fill</i> graphics
+parameter in R is set. We determine this by 
+checking whether the <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rslot">fill</i> field 
+corresponds to the "color" transparent. The
+<i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rfunc"><a href="Help//isTransparent.html">isTransparent()
+  </a></i> function hides the details.
+</p><div xmlns="" class="codeToggle"><div class="unhidden" id="id36293519"><div><pre class="rcode" title="R code">
+  funs@rect = function(x1, y1, x2, y2, context, dev) {
+    op = if(!isTransparent(context$fill))  "fillRect" else "strokeRect"
+
+    add(c("// rect",
+          setContext(context),
+          sprintf("ctx.%s(%d, %d, %d, %d);",
+                     op,
+                     as.integer(min(x1, x2)), as.integer(min(y1, y2)),
+                     abs(as.integer(x2 - x1)), abs(as.integer(y2 - y1)))))
+  }
+</pre></div></div></div>
+<div xmlns="" class="clearFloat"></div>
+<p>
+</p><p>
+The remainder of the graphical operations are similar,
+except for those related to text. These are often quite tricky
+as we have to deal with different fonts and computing
+the dimensions of the rendered string and even rotating the text
+and working with that.  We have not taken the time to make this
+pretty for our prototype.  Indeed, this is an area where the
+JavaScript canvas is quite weak. We use Jim Studt's 
+drawing of Hershey fonts for the moment.
+You can find the code and more information at 
+<a class="ulink" href="http://www.federated.com/~jim/canvastext/" target="_top">http://www.federated.com/~jim/canvastext/</a>.
+</p><p>
+To handle text, we implement both the <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rfunc"><a href="Help//text.html">text()
+  </a></i>
+and <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rfunc"><a href="Help//strWidth.html">strWidth()
+  </a></i> functions.
+We do the simplest thing for computing the width of the string
+which is to multiply the number of characters by the current
+font size and the character expansion setting. This is done via
+the following function:
+</p><pre xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rfunction">
+  funs@strWidth = function(str, gcontext, dev) {
+     nchar(str) * max(10, gcontext$ps) * gcontext$cex
+  }
+</pre>
+<p><br xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="">
+Here we see that we are accessing the current point size and
+character expansion from the <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rarg">gcontext</i>
+parameter. Rendering the text is similar to drawing
+a line or circle. For the JavaScript device, we ignore
+the rotation and horizontal adjustment for now.
+</p><p>
+There are two other functions that are important to implement.
+The first of these is <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rfunc"><a href="Help//newPage.html">newPage()
+  </a></i>
+and this is called when the R graphics engine is starting a new plot.
+For our device, this is when we move any generated code in <b xmlns:rs="http://www.omegahat.org/RS" xmlns:s="http://cm.bell-labs.com/stat/S4" xmlns="" class="$">commands</b>
+into the <b xmlns:rs="http://www.omegahat.org/RS" xmlns:s="http://cm.bell-labs.com/stat/S4" xmlns="" class="$">pages</b> list.  So we call <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rfunc"><a href="Help//endPage.html">endPage()
+  </a></i>:
+</p><pre xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rfunction">
+  funs@newPage = function(gcontext, dev) {
+     endPage()
+  }
+</pre>
+<p><br xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="">
+The second function is <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rfunc"><a href="Help//close.html">close()
+  </a></i> which is invoked when we
+close the R graphics device. This too much take care of moving any
+generated code into <b xmlns:rs="http://www.omegahat.org/RS" xmlns:s="http://cm.bell-labs.com/stat/S4" xmlns="" class="$">pages</b>. But it must also output all
+the generated.  Here we call the function that was specified via the
+<i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rarg">wrapup</i> parameter.  By default, this is an external
+helper function <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rfunc"><a href="Help//writeCode.html">writeCode()
+  </a></i> and it is passed the list
+of generated plot commands (<b xmlns:rs="http://www.omegahat.org/RS" xmlns:s="http://cm.bell-labs.com/stat/S4" xmlns="" class="$">pages</b>), the
+<i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rarg">file</i> argument and any additional arguments provided via
+the <b xmlns:rs="http://www.omegahat.org/RS" xmlns:s="http://cm.bell-labs.com/stat/S4" xmlns="">...</b> mechanism.
+<i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rfunc"><a href="Help//writeCode.html">writeCode()
+  </a></i> turns the code for each plot
+into a separate JavaScript function, adding some initialization JavaScript 
+commands to retrieve the JavaScript graphics context from the associated HTML
+canvas. Then it writes these JavaScript function definitions to the specified connection.
+ </p><div class="section" title="Displaying the JavaScript"><div class="titlepage"><div><div><h4 class="title"><a id="id36293612"></a>Displaying the JavaScript</h4></div></div></div><p>
+This graphics device merely generates the JavaScript code that can be
+run to display the plot(s). 
+We do this in a Web browser and we do it by having the JavaScript code
+be included in an HTML document.  
+The file <code xmlns:r="http://www.r-project.org" xmlns:s="http://cm.bell-labs.com/stat/S4" xmlns:c="http://www.C.org" xmlns:python="http://www.python.org" xmlns:perl="http://www.perl.org" xmlns:vb="http://www.visualbasic.com" xmlns:omegahat="http://www.omegahat.org" xmlns:bioc="http://www.bioconductor.org" xmlns:java="http://www.java.com" xmlns:statdocs="http://www.statdocs.org" xmlns:gtk="http://www.gtk.org" xmlns:com="http://www.microsoft.com" xmlns:sh="http://www.shell.org" xmlns="" class="file">template.html</code> provides, as the name suggests, a
+template HTML document that you can use. 
+We can generate the JavaScript code for the plot with a command something like
+</p><div xmlns="" class="codeToggle"><div class="unhidden" id="id36293626"><div><pre class="rcode" title="R code">
+jsCanvas("myPlot.js", c(500, 500))
+ library(maps)
+ map('usa')
+dev.off()
+</pre></div></div></div>
+<div xmlns="" class="clearFloat"></div>
+<p>
+Then we can edit the <code xmlns:r="http://www.r-project.org" xmlns:s="http://cm.bell-labs.com/stat/S4" xmlns:c="http://www.C.org" xmlns:python="http://www.python.org" xmlns:perl="http://www.perl.org" xmlns:vb="http://www.visualbasic.com" xmlns:omegahat="http://www.omegahat.org" xmlns:bioc="http://www.bioconductor.org" xmlns:java="http://www.java.com" xmlns:statdocs="http://www.statdocs.org" xmlns:gtk="http://www.gtk.org" xmlns:com="http://www.microsoft.com" xmlns:sh="http://www.shell.org" xmlns="" class="file">template.html</code> file.
+We add a <font xmlns:html="http://www.w3.org/TR/html401" xmlns="" class="htmlTag">script</font> element to reference the newly
+generated <code xmlns:r="http://www.r-project.org" xmlns:s="http://cm.bell-labs.com/stat/S4" xmlns:c="http://www.C.org" xmlns:python="http://www.python.org" xmlns:perl="http://www.perl.org" xmlns:vb="http://www.visualbasic.com" xmlns:omegahat="http://www.omegahat.org" xmlns:bioc="http://www.bioconductor.org" xmlns:java="http://www.java.com" xmlns:statdocs="http://www.statdocs.org" xmlns:gtk="http://www.gtk.org" xmlns:com="http://www.microsoft.com" xmlns:sh="http://www.shell.org" xmlns="" class="file">myPlot.js</code> file.
+We also set the identifier for the canvas to correspond to the value
+used in the JavaScript function we generated.
+Finally, we add a call to that function in the 
+<font xmlns:html="http://www.w3.org/TR/html401" xmlns="" class="htmlAttribute">onload</font> attribute of the <font xmlns:html="http://www.w3.org/TR/html401" xmlns="" class="htmlTag">body</font> element.
+</p><pre xml:lang="html" class="programlisting">
+&lt;!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN"&gt;
+&lt;html&gt; &lt;head&gt;
+&lt;script type="application/x-javascript" src="canvastext.js"&gt;&lt;/script&gt;
+<font xmlns="" xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" class="codeEmphasis" col="red">&lt;script type="application/x-javascript" src="myPlot.js"&gt;&lt;/script&gt;</font>
+&lt;title&gt;Example of the Canvas&lt;/title&gt;
+&lt;/head&gt;
+
+&lt;body onload="<font xmlns="" xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" class="codeEmphasis" col="red">rdraw()</font>"&gt;
+
+&lt;canvas id="<font xmlns="" xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" class="codeEmphasis" col="red">canvas</font>" width="1000" height="800" &gt;
+  No support for JavaScript canvas
+&lt;/canvas&gt;
+
+&lt;/body&gt;
+&lt;/html&gt;
+</pre><p>
+</p><p>
+This isn't very arduous, but it is tedious.
+We can have R do this for us and that is what the
+derived graphics device function <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rfunc"><a href="Help//htmlCanvas.html">htmlCanvas()
+  </a></i>
+does for us. This is easily defined as
+</p><pre xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rfunction">
+htmlCanvas =
+function(file, dim = c(1000, 800), template = "template.html")
+{
+  jsCanvas(file, dim, wrapup = htmlWrapup, template = template, dim)
+}
+</pre>
+<p><br xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="">
+It is essentially just a call to <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rfunc"><a href="Help//jsCanvas.html">jsCanvas()
+  </a></i>, but the
+key is that we provide our own function to do the
+<i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rarg">wrapup</i> and emit the generated code.  This
+<i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rfunc"><a href="Help//htmlWrapup.html">htmlWrapup()
+  </a></i> function will create an HTML document with
+the code inside it.  This function will read the template HTML file
+and will use the existing <font xmlns:html="http://www.w3.org/TR/html401" xmlns="" class="htmlTag">canvas</font> element and its
+<font xmlns:xp="http://www.w3.org/TR/xpath" xmlns:kml="http://earth.google.com/kml/2.1" xmlns="" class="xmlAttribute">id</font> attribute value when generating the JavaScript
+code.  It will add the <font xmlns:html="http://www.w3.org/TR/html401" xmlns="" class="htmlTag">script</font> element and insert
+the code directly into that element rather than keeping it in a
+separate file.  Then it updates the <font xmlns:html="http://www.w3.org/TR/html401" xmlns="" class="htmlTag">body</font>'s
+<font xmlns:html="http://www.w3.org/TR/html401" xmlns="" class="htmlAttribute">onload</font> attribute.  It will also set the width
+and height attributes of the canvas element to match the dimensions of
+the graphics device.
+</p><p>
+So we can now use this in calls of the form
+</p><div xmlns="" class="codeToggle"><div class="unhidden" id="id36293717"><div><pre class="rcode" title="R code">
+library(maps)
+htmlCanvas("usa.html")
+ map('usa')
+dev.off()
+</pre></div></div></div>
+<div xmlns="" class="clearFloat"></div>
+<p>
+</p><p>
+If we generate more than one plot, the <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rfunc"><a href="Help//htmlWrapup.html">htmlWrapup()
+  </a></i> 
+handles this by adding new canvas elements,
+giving the different identifiers, using these when generating
+the JavaScript functions and adding calls to all of them
+in the <font xmlns:html="http://www.w3.org/TR/html401" xmlns="" class="htmlAttribute">onload</font> attribute.
+</p></div><div class="section" title="The R_GE_gcontext classes"><div class="titlepage"><div><div><h4 class="title"><a id="id36293734"></a>The <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns=""><a href="Help/R_GE_gcontext-class.html">R_GE_gcontext</a></i> classes</h4></div></div></div><p>
+We mentioned the <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rfunc"><a href="Help//setContext.html">setContext()
+  </a></i> function above.
+This accesses the values from R's graphics context and 
+sets the corresponding fields in the JavaScript graphics context.
+Most of the values are pretty straightforward.
+The point size is an integer; similarly, line width and line type
+are integers. 
+</p><p>
+The graphics context contains the drawing color and the filling color.
+These are represented as integers and interpreted in a specific
+manner by R. See the file <code xmlns:r="http://www.r-project.org" xmlns:s="http://cm.bell-labs.com/stat/S4" xmlns:c="http://www.C.org" xmlns:python="http://www.python.org" xmlns:perl="http://www.perl.org" xmlns:vb="http://www.visualbasic.com" xmlns:omegahat="http://www.omegahat.org" xmlns:bioc="http://www.bioconductor.org" xmlns:java="http://www.java.com" xmlns:statdocs="http://www.statdocs.org" xmlns:gtk="http://www.gtk.org" xmlns:com="http://www.microsoft.com" xmlns:sh="http://www.shell.org" xmlns="" class="file">GraphicsDevice.h</code> for more information
+about the meanings of the different bytes. 
+To make things simpler (we hope), we have provided two classes in the
+<a xmlns:omg="http://www.omegahat.org" xmlns:rwx="http://www.omegahat.org/RwxWidgets" xmlns="" href="http://www.omegahat.org/RGraphicsDevice">RGraphicsDevice</a>. These allow us to convert
+the integer to a string when interpreting the integer and using
+it in another system, and to convert from a string to an integer
+when specifying a color for R to use.
+These classes are named <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns=""><a href="Help/RGB-class.html">RGB</a></i> and <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns=""><a href="Help/RGBInt-class.html">RGBInt</a></i>.
+We can use them via regular coercion.
+For example, 
+</p><div xmlns="" class="codeToggle"><div class="unhidden" id="id36293772"><div><pre class="rcode" title="R code">
+  as(gcontext$col, "RGB")
+</pre></div></div></div>
+<div xmlns="" class="clearFloat"></div>
+<p>
+converts the color in R's graphics context to a string. This might
+be a named color such as "red" or "yellow" or an hexadecimal RGB string,
+e.g. "#FF882300". The extra digits give the alpha level for the degree of transparency.
+If we want to set a color in R, we can use RGB strings or named colors and
+convert them to an integer with, e.g.
+</p><div xmlns="" class="codeToggle"><div class="unhidden" id="id36293778"><div><pre class="rcode" title="R code">
+  as("red", "RGBInt")
+<pre class="routput">
+An object of class "RGBInt"
+[1] 4278190335
+</pre>
+</pre></div></div></div>
+<div xmlns="" class="clearFloat"></div>
+<p>
+</p><p>
+The <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rslot">lend</i> and <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rslot">ljoin</i> fields 
+are like integers, but have a small set of possible values.
+They correspond to enumerated constants in C and we map
+these into <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns=""><a href="Help/EnumValue-class.html">EnumValue</a></i>s in R.
+(For now, you should coerce them yourself as the C code does not
+explicitly do this at present but will in the future.)
+If we look at this value, we might see something like
+</p><div xmlns="" class="codeToggle"><div class="unhidden" id="id36293800"><div><pre class="rcode" title="R code">
+as(gcontext$lend, "R_GE_lineend")
+<pre class="routput">
+             GE_ROUND_CAP
+R_GE_lineend            1
+</pre>
+</pre></div></div></div>
+<div xmlns="" class="clearFloat"></div>
+<p>
+The name is the value is the important thing to note. This 
+is the human-readable name and the value we should use.
+If we want to set the value for the line ending, we should
+use this name. We can do this in either of the following ways:
+</p><div xmlns="" class="codeToggle"><div class="unhidden" id="id36293809"><div><pre class="rcode" title="R code">
+ gcontext$lend = "GE_ROUND_CAP"
+ gcontext$lend = GE_ROUND_CAP
+</pre></div></div></div>
+<div xmlns="" class="clearFloat"></div>
+<p>
+The difference is simply that in the first case, we are coercing
+the name to an instance of the <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns=""><a href="Help/R_GE_lineend-class.html">R_GE_lineend</a></i> class,
+and in the second, we already have an actual R variable with the corresponding
+name that is an instance of that class. So we typically use the second approach
+when setting the value.
+For accessing the value and using in, for example, JavaScript code, we need
+to map the name to the corresponding value in Java.
+JavaScript uses "round", "butt" and "square".
+We can map our values of "GE_ROUND_CAP", "GE_BUTT_CAP" and "GE_SQUARE_CAP" to these
+in whatever way we think best. In our JavaScript device, we use string
+manipulation in the <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rfunc"><a href="Help//jsLineCap.html">jsLineCap()
+  </a></i> function.
+We do the same for line joins.
+</p><p>
+The final part of the R graphics context object that needs some
+explanation is the font information.  The <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rslot">fontface</i> is
+an integer.  0 corresponds to plain, 1 to italic and 3 to bold.  The
+<i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rslot">fontfamily</i> is a character vector of length 201.  Each
+element is a single character. Look at the C code in
+<i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns=""><a href="http://cran.r-project.org/web/packages/grDevices/index.html">grDevices</a></i> package for more information on how this is
+interpreted.
+</p></div><p>
+We have used the approach of creating a sequence of JavaScript
+commands that render the plot.  It is valuable to instead create
+objects that correspond to the graphical elements and render those.
+While the visual result is the same, the objects can be
+programmatically manipulated after they have been created. We can hide
+objects, change their appearance, move them in animations and allow
+the viewer to modify them with GUI controls.
+To be able to do this, we need to be able to a) create objects,
+and b) associate the objects in the plot with the different
+elements of the plot, e.g. axes, tick marks, title, data points.
+One of the benefits of doing this in the R language is that
+we can examine the call stack via <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rfunc"><a href="Help//sys.calls.html">sys.calls()
+  </a></i> and
+this allows us, albeit in an ad hoc manner, to determine 
+from where the drawing operations were called and to which part of the plot
+they correspond.
+</p></div><div class="section" title="SVG Device"><div class="titlepage"><div><div><h3 class="title"><a id="id36293854"></a>SVG Device</h3></div></div></div><p>
+R provides a rich Cairo-based graphics device and there are two
+C-level graphics devices that generate SVG.  Also, we can annotate SVG
+generated from the Cairo-based device using
+<a xmlns:omg="http://www.omegahat.org" xmlns:rwx="http://www.omegahat.org/RwxWidgets" xmlns="" href="http://www.omegahat.org/SVGAnnotation">SVGAnnotation</a>.
+However, as an illustration and also because we can do more things within R
+than at the C-level, there is a very simple implementation of an SVG graphics device
+in the package in <code class="dir">examples/SVG</code>/
+. 
+</p></div></div><div class="section" title="The size() operation"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="id36293874"></a>The <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rfunc"><a href="Help//size.html">size()
+  </a></i> operation</h2></div></div></div><p>
+A graphics device has a <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rfunc"><a href="Help//size.html">size()
+  </a></i> method/operation
+and it is expected to return information about its
+location and dimensions. In C, it is passed
+references to 4 numbers and is expected to fill these in.
+In this interface, we are also passed references to 4 C-level 
+number data types and expected to fill them in.
+We do this by treating the objects as if they are regular
+numeric vectors and setting the first value of each.
+So our default size function might be
+</p><pre xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="" class="rfunction">
+size = 
+function(left, right, bottom, top, dev) {
+  left[1] = 0
+  right[1] = dev$right
+  bottom[1] = dev$bottom
+  top[1] = dev$right
+}
+</pre>
+<p><br xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns="">
+We might allow the function to return a numeric vector of length 4 and
+have the C code insert the values into the corresponding C references.
+</p></div><div class="section" title="Future Directions"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="id36293902"></a>Future Directions</h2></div></div></div><p>
+We have provided a relatively straightforward one-to-one mapping of
+the internal code to R functions.  There are additional features we
+could add and different idioms and interfaces we could implement.
+We will at some stage make additional internal R graphics functionality available
+so that these can be used by an R programmer implementing an R graphics device.
+</p><p>
+We will also make it possible to dynamically modify the C routines
+that implement an internal graphics device, e.g. the C routine that is
+called to draw a line. While we have provided routines that call the
+corresponding R function in the device, it is useful to be able to
+implement some of these primitives with R functions and others with C
+routines and mix code across the languages.
+This is quite easy and amounts to not removing the function
+pointers from the code we generate in the <code xmlns:r="http://www.r-project.org" xmlns:s="http://cm.bell-labs.com/stat/S4" xmlns:c="http://www.C.org" xmlns:python="http://www.python.org" xmlns:perl="http://www.perl.org" xmlns:vb="http://www.visualbasic.com" xmlns:omegahat="http://www.omegahat.org" xmlns:bioc="http://www.bioconductor.org" xmlns:java="http://www.java.com" xmlns:statdocs="http://www.statdocs.org" xmlns:gtk="http://www.gtk.org" xmlns:com="http://www.microsoft.com" xmlns:sh="http://www.shell.org" xmlns="" class="file">tu.R</code> script.
+</p><p>
+We can avoid lexical scoping by maintaining a state object.  We can
+create an object which represents the current state of the device and
+store it in the device's state slot.  Each of our graphics engine
+primitive functions have access to this and can both query and set it.
+This can be done now.
+</p><p>
+We have specified the functions to use to implement the graphical primitives.
+This is the most direct way of doing things. Another approach
+is to use generic functions for these graphical primitives.
+Then the generic graphics device would invoke the appropriate
+method based on the class of the graphics device.
+To define a device, we would define a sub-class of <i xmlns:s3="http://www.r-project.org/S3" xmlns:cpp="http://www.cplusplus.org" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns=""><a href="Help/DevDescPtr-class.html">DevDescPtr</a></i> and
+arrange for the C code that invokes our existing proxy C routines
+to convert the instances to that type of object.  (This object
+could be stored in the device specific state field.)
+We can implement this with the existing  direct framework
+and the benefit is that this is a more common and familiar object-oriented
+programming approach for R programmers.
+Other than that, it is not necessary.
+</p></div><div class="section"><div class="titlepage"><div><div><h2 class="title" style="clear: both"><a id="id36293949"></a></h2></div></div></div><p>
+We can get the functions that implement a device using the
+<b xmlns:rs="http://www.omegahat.org/RS" xmlns:s="http://cm.bell-labs.com/stat/S4" xmlns="" class="$">devDesc</b> field of the device object.
+We'll illustrate this with the FlashMXML device.
+
+</p><div xmlns="" class="codeToggle"><div class="unhidden" id="id36293959"><div><pre class="rcode" title="R code">
+library(FlashMXML)
+dev = mxmlDevice("/tmp/foo.mxml", compile = FALSE)
+my = dev$deviceSpecific()
+class(my)
+as(my, "RDevDescMethods")
+</pre></div></div></div>
+<div xmlns="" class="clearFloat"></div>
+<p>
+
+We actually want to get the state of the device
+including any additional functions. In this regard, we should have
+the deviceSpecic object be set to an R object
+</p></div></div></body></html>

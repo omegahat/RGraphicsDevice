@@ -1,0 +1,39 @@
+Sort out how we want to deal with Enumeration that  have a typedef.
+  use a special class for the name or use a class for the entire thing.
+  Or both.
+
+Initialize the return value in a function so we can just return it.
+
+[Done] Recognize SEXP as special.
+ Maps to an ANY in a class definition.
+  
+ Should use a RFunctionType and then we would know it was a function, not any ANY.
+
+
+Allow the DefinitionContainer() to have a registration filter that
+can take the object being registered and modify it.
+ Make certain that we return this modified object from all of the callers
+ to resolveType()
+
+
+Done:
+
+enum Rboolean  on return type of R_locator.
+
+ funs$newFrameConfirm@type@returnType
+
+ Identify that these are typedefs, even if the node is 
+ to the enumeral_type.
+ If the name points to a typedef, then we define a new class with the typedef
+ otherwise a simple enum with a name. Then getNativeDeclaration behaves accordingly.
+
+
+
+
+
+  Same problem that the -I flag was wrong to not find RConverter.h
+  and the SETCAR was because  of no R_createNativeReference().
+
+ RConverter.h
+
+ SETCAR() and second argument 

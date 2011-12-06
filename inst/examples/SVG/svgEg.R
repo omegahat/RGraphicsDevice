@@ -1,0 +1,7 @@
+library(RGraphicsDevice)
+source("svgDev.R")
+dev = rsvgDevice(file = "bob.svg")
+plot(1:10, col = c("yellow", "blue"), main = "Hi there")
+abline(v = 1:10, col = "blue", lty = 2)
+abline(h = 1:10, col = "red", lwd = 3)
+dev.off()

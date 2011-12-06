@@ -1,0 +1,250 @@
+<?xml version="1.0"?>
+<article xmlns:r="http://www.r-project.org"
+         xmlns:xi="http://www.w3.org/2003/XInclude">
+
+<articleinfo>
+
+<title>Mapping Raw Graphical Elements to Plot Components</title>
+
+<author><firstname>Duncan</firstname><surname>Temple Lang</surname>
+  <affiliation><orgname>University of California at Davis</orgname>
+               <orgdiv>Department of Statistics</orgdiv>
+  </affiliation>
+</author>
+</articleinfo>
+
+<section>
+<title>Motivation</title>
+
+<para>
+The idea of this code is quite straightforward.  We want to be able to
+examine a graphical display created in R and identify the different
+elements such as lines, text, circles, polygons and polylines and map
+them to higher level concepts such as axes, axes tick marks, titles,
+axes labels, legend and legend text, and of course, data points.  The
+purpose of this is to aid in post-processing a plot so that we can
+annotate it in different ways. For example, we might want to make
+certain elements interactive by adding tooltips, or make them respond
+more generally to mousing over a point or clicking on a string.  We
+might also want to animate the objects.  We can do this with SVG,
+JavaScript or Flash.  However, to add such annotations (either in R or
+JavaScript/ActionScript), we need to be able to map the different raw
+graphical elements to the higher-level elements that make up a plot.
+</para>
+
+<para>
+The graphics device in (currently) pieceDevice.R does not produce any
+graphical output at present in the sense of something we can see as a
+plot.  Instead, it collects up the different low-level elements into a
+list (for each page of plots).  We can then examine these elements and
+find the different nodes.  Perhaps most importantly, we can find the
+different elements corresponding to high-level display concepts by
+index.  We can then use these to map to the elements created by a
+regular device such as the SVG device(s), the JavaScript device and
+the Flash MXML device.
+
+</para>
+<para>
+Is all of this material available from the displayList.
+
+</para>
+<para>
+An additional example of where we can use this approach is in creating
+image maps.  Barry Rowlingson has developed a package imagemap.  The
+approach there is that the R programmer specifies the regions in which
+she wants certain actions to occur when the viewer moves the mouse
+into that region.  This works well when the regions do not correspond
+directly to the elements that are drawn on the R plot, e.g. a general
+geographical region, or a rectangle containing multiple points.
+However, when we want to provide interaction on the visible elements
+of the plot, we would like to avoid having to specify the regions
+explicitly. Instead, we would like to find those elements and add an
+interaction based on their coordinates and shapes.  To do this, we
+need to find the graphical elements in the display.
+</para>
+
+
+
+<para>
+There is little doubt that if used grid graphics we would have all the
+information about a plot directly in R from the plot object. We would
+not have to indirectly infer the objects, shapes, etc. via the
+low-level device information.  Paul Murrel's <r:pkg>gridSVG</r:pkg>
+package does this.  Unfortunately, there are a great many plot
+functions that do not use <r:pkg>grid</r:pkg>.  However, as people
+increasingly use <r:pkg>lattice</r:pkg> and <r:pkg>ggplot2</r:pkg>,
+plots are created via <r:pkg>grid</r:pkg> and so we can work with
+these directly.  In some regards, what we are describing here is a
+compromise that allows us to use existing R graphics functions for the
+immediate future. And the approach applies to traditional graphics and
+grid-based graphics.
+</para>
+
+</section>
+
+<section>
+<title>How this will be used</title>
+
+<para>
+The idea is that we will implement a generic "structure" device.
+This will be responsible for 2 things:
+<ol>
+<li>collecting the raw descriptions of the graphics elements being drawn</li>
+<li>creating the code that will render the elements in the target format</li>
+</ol>
+Again recall that the goal here is to be able to post-process the
+graphical display at a higher-level than simple points or lines, but
+in terms of time series, axes, titles, panels, etc.  So we need to
+identify these higher-level structures from the raw descriptions and
+associate them with the elements rendered in the target format.  The
+creator of the plot can then add code or post-processing instructions
+to access and manipulate these higher-level objects and access the
+collection of graphical elements each contains to, for example,
+animate their appearance or set event handlers for the elements.
+
+
+</para>
+<para>
+
+This post-processing can be done in R or the target system, e.g. JavaScript/ActionScript
+or SVG (via JavaScript), or both.
+At its simplest, we will group the grapichal elements
+into higher-level structures and make the indices of these
+available to the target system.
+So in the output from the JavaScript device, we would have 
+a sequence of commands to create the low-level graphical elements
+and these JavaScript objects would be collected into an array in the
+order they were created. This order corresponds to the same order of
+the raw descriptions collected by R.
+Then we would have a JavaScript variable(s) that identifies the 
+higher-level object, e.g. axis, by either an array of the indices
+of the corresponding graphical elements, or an array of the elements
+themselves.
+For example, we might have tick marks for an axis and a label
+<mx:code>
+ i = 24;
+ grobs[i++] = new RLine(10, 20, 10, 10, ...);
+ grobs[i++] = new RLine(20, 20, 20, 10, ...);
+ grobs[i++] = new RLine(30, 20, 30, 10, ...);
+ grobs[i++] = new RText(100, 5, "X Axis Label", ...);
+</mx:code>
+and then
+<mx:code>
+ xaxis = [ 24, 25, 26, 27, 28 ];
+</mx:code>
+
+</para>
+<para>
+In SVG, we would regroup the nodes to put the elements for an axis
+into a new group and put an attribute on that group that identifies
+it as a horizontal axis.
+
+</para>
+<para>
+It is natural to take this further. With a little programming in the
+target language, we can create classes that define Axis, VerticalAxis,
+HorizontalAxis and we can generate code in R that will create
+instances of those in the target language when the plot is rendered.
+We can again draw the elements and then add them to an Axis object, or
+we can describe an abstract axis by giving the locations of the ticks
+and labels and whether it has a line across the axis and then have a
+method to draw that.
+In the first case, we would have the code above to create the entries
+for the <mx:var>grob</mx:var> array and then we would set these.
+<mx:code>
+ xaxis = new HorAxis()
+   xaxis.ticks = [ grobs[24], grobs[25], grobs[26], grobs[27]];
+   xaxis.label = grobs[28];
+</mx:code>
+
+</para>
+
+
+<para>
+Now the creator of the display can add ActionScript
+to the Flash/MXML code that operates on this xaxis object
+to provide interactivity or animation.
+</para>
+
+<para>
+Rather than using variables such as xaxis, yaxis, etc.  we should have
+the function in the target language which generates the graphical
+elements for the display return a structured object.  We generate this
+code in R, so we can arrange to do that.  Then the creator of the
+display is responsible for invoking this function at the appropriate
+time in her code and assigning the structured result to a variable
+under her control.
+So the function  we generate in R
+should look something like
+<mx:code>
+public  function rdraw() : RPlot {
+  var grobs : Array = [];
+  var i : int = 0;
+
+  grobs[i++] = new RLine(...);
+      ...
+  grobs[i++] = new RText(...);
+
+  dataPoints = [grobs[10], grobs[11], .... ];
+  xaxis = new HorAxis([grobs[90], grobs[91], .... ], grobs[101]);
+  title = [grobs[102], grobs[103]];
+
+  new RXYPlot(dataPoints, xaxis, yaxis, title);
+}
+</mx:code>
+
+</para>
+
+
+
+<para>
+It is entirely possible to write just one graphics device
+which will collect these descriptions of the elements
+and then have methods to convert these to 
+different formats such as SVG, JavaScript, ActionScript,
+KML. In this case, we would define explicit classes for the 
+descriptions of the graphical primitive elements 
+and we would coerce them to a target format, e.g.
+  
+<r:code>
+   as(gdesc, "JavaScriptCode")
+   as(gdesc, "KMLNode")
+</r:code>
+</para>
+<para>
+We can even have such methods for 
+higher level objects such as axes or
+even a plot.
+<r:code>
+  getAxes(desc)
+  lapply(desc, as, "ActionScriptCode")
+</r:code>
+Again, this brings us back very close to the approach used in
+<r:pkg>gridSVG</r:pkg> but at a higher-level as we are describing
+components of a display.  We are getting close to using a class
+hierarchy for describing components of a display and so we should be
+using Lee Wilkinson's grammar of graphics and so ggplot2.
+There could be a significant benefit to using that, but again,
+that omits the plots created outside of these systems.
+</para>
+
+
+</section>
+
+
+<section>
+<title>Functions</title>
+
+<para>
+The <r:func>pieceDevice</r:func> is the function
+we call to create a device that collects the descriptions of the raw elements.
+</para>
+<para>
+In the future, we might implement a device that combines the
+actions of the <r:func>pieceDevice</r:func> and another device
+so that we can create the regular output at the same time as
+collecting the corresponding descriptions of the raw elements.
+This is like a tee command for devices.
+</para>
+</section>
+</article>

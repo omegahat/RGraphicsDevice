@@ -1,0 +1,184 @@
+<?xml-stylesheet type="text/xsl" href="../../Docs/XSL/Todo.xsl" ?> 
+<topics xmlns:r="http://www.r-project.org"
+        xmlns:c="http://www.C.org">
+<title>Todo for RGraphicsDevice</title>
+
+<topic>
+<items>
+
+<item>
+We need access to the pGEDevDesc
+so we can set recording and ask, etc.
+
+See desc2GEDesc to go from DevDesc to pGEDevDesc.
+</item>
+
+<item>
+Do we have finalizers on the device.
+<br/>
+Don't want them as the memory is R's. But
+we do want to free the objects.
+Add code to release all the functions in the RDevDescMethods
+field.
+</item>
+
+<item>
+Make enumeration values from  C real R objects, i.e. with class.
+</item>
+
+<item>
+In polygon, need to be able to convert the doublePtr to an R vector
+using the first argument as the length.
+<br/>
+Can coerce this with <r:expr>x[1:n]</r:expr>
+</item>
+
+<item>
+In, e.g. the size function pointer, we are passing refrences to double's
+Handle passing these up as a values and getting the results back
+and setting them in the pointers.
+<br/>
+Also check we can get the value, e.g. with valueOf()
+</item>
+
+<item>
+Fix/Rationalize the use of CStruct in this code and in
+the RGCCTranslationUnit.
+This is probably related the enum definitions coming
+from the generateStructInterface (defineStructClass() actually)
+and will go away.
+</item>
+
+<item status="done">
+get enumerations for line join and line end. They are treated as such for the C code, but the class definitions
+are wrong.  So we generate them ourselves manually in the tu.R for the moment.
+<br/>
+In generateStructInterface, just return the extra classes we need to 
+process and leave it up to the caller to do that. Otherwise, get
+the class definitions right.
+<br/>
+</item>
+
+<item>
+Also, separate the creation of the R code and the writing of the R code
+for EnumerationDefinition type.
+</item>
+
+<item status="low">
+allow the caller to specify a C routine rather than an R function,
+i.e. give them access to the raw DevDesc pointes.
+We can add dev$strWidth and look at the right hand side and
+behave according to whether it is a function or a NativeSymbolInfo.
+<br/>
+This should be easy if we just leave the function pinter fields
+in the struct when we generate the DevDesc code.
+</item>
+
+<item status="low">
+Allow an additional parameter to be passed to the R functions which
+preserve the state.  This way, the R programmer can specify an R
+object that is the state for this device.  If the R function returns a
+list with 2 elements giving the actual value and the updated state,
+then we should set this in the device.
+<br/>
+I think we can do this directly now assuming
+we can get and set the state field we added to RDevDescMethods.
+</item>
+
+
+<item status="done">
+Use PreserveObject and ReleaseObject for SEXPs
+when setting the R functions in RDevDescMethods.
+<br/>
+Not done for the methods setting individual fields, but done
+for the initialization in block.
+<br/>
+We want, e.g., 
+<c:code><![CDATA[
+SEXP
+R_RDevDescMethodsPtr_set_textUTF8 (SEXP r_obj , SEXP r_value  )
+{
+    struct  RDevDescMethods *obj ;
+    SEXP value ;
+    value = r_value;
+    obj = ( struct  RDevDescMethods * )  R_getNativeReference(r_obj, "RDevDescMethods", NULL) ;
+    if(obj -> textUTF8 && obj -> textUTF8  != R_NilValue)
+       R_ReleaseObject( obj -> textUTF8 );
+    obj -> textUTF8 = value;
+    if(obj -> textUTF8 && obj -> textUTF8  != R_NilValue)
+       R_PreserveObject(obj -> textUTF8) ;
+    return(r_obj);
+} 
+]]></c:code>
+We can do this with a statement.
+</item>
+
+
+
+<item status="done">
+Print issues with enumerations.
+<r:code>
+new("R_GE_gcontext")
+</r:code>
+does it.
+<br/>
+Problem was with earlier class definitions for enumerations from
+defineStructClass() that were just wrong, i.e. the CStruct not enumeration.
+</item>
+
+
+<item status="done">
+Restrict the types of RDevDescMethods to R functions or NULL via a setClassUnion.
+<br/>
+Define RFunction as an R class that extens SEXP.
+Then have methods that give the name of the R class/type
+as RFunctionOrNULL
+</item>
+
+
+<item status="done"> 
+R_RDevDescMethodsPtr_set_line method in R, we have value = value
+for no good reason. Make coerceRValue do better and avoid this.
+<br/>
+No! The problem is that we didn't have a method for coerceRValue
+for FunctionOrNULL.
+</item>
+
+
+<item status="done">
+Allow changing the R functions within an existing, running device.
+<r:code>
+library(RGraphicsDevice)
+devFuns = dummyDevice()
+dev = graphicsDevice("MyDummyDevice", funcs = devFuns)
+live = dev$deviceSpecific
+ff = function(...) { print("This is the new version of line") }
+live$line = ff
+dev$deviceSpecific$line
+  dev$right = 1000
+  dev$bottom = 800
+  dev$ipr = rep(1/72.27, 2)
+  plot(1:10)
+</r:code>
+<br/>
+We can do this by getting the RDevDescMethods pointer and 
+setting the values on that.
+</item>
+
+<item status="done">
+Put a validity  method on the functions that checks the number of parameters.
+<br/>
+Hard to determine at "definition time" if they are correct or if there is an
+appropriate return value.
+</item>
+
+
+<item status="done">
+In the proxy routines check for NULL and R_NilValue.
+<br/>
+Or could do this within the routine setting the values.
+Done now.
+</item>
+</items>
+</topic>
+</topics>

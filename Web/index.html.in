@@ -1,0 +1,84 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html> <head>
+<link rel="stylesheet" href="../OmegaTech.css">
+<title>@PKG_NAME@</title>
+</head>
+
+<body>
+<h1>@PKG_NAME@</h1>
+<p align=right><a href="@TAR_FILE@">@TAR_FILE@</a> (@DATE@)</p>
+
+This package provides a framework for implementing R graphics devices
+with R functions rather than C code.  It is intended to be used for
+prototyping new graphics devices and for facilitating those who aren't
+familiar with C to write R graphics devices.
+We can use this to avoid tiresome details when exploring
+new devices and media.
+
+<p>
+
+The package comes with an incomplete prototye of a device that
+writes JavaScript code to render the R graphics on a JavaScript
+canvas.  See <a
+href="https://developer.mozilla.org/en/Canvas_tutorial/Drawing_shapes">https://developer.mozilla.org/en/Canvas_tutorial/Drawing_shapes</a>
+
+<p>
+We plan to use this to implement a Flash/Flex3 graphics device which will
+generate R graphics content that can be rendered as Flash.
+
+<h2>Software</h2>
+
+The source for the package is <a href="@TAR_FILE@">@TAR_FILE@</a>.
+You also need the <a href="../RAutoGenRunTime">RAutoGenRunTime</a>
+package which provides class definitions on which the generated code
+reliess.
+
+<h2>Documentation</h2>
+<dl>
+
+  <dt>
+  <li> <a href="overview.html">A Guide to Implementing a New Device</a>
+  <dd>  And a <a href="overview.pdf">PDF version here</a>
+  
+  <dt>
+  <li> <a href="Rjs.R">JavaScript graphics device
+      prototype</a>  and <a href="jsEg.R">some examples</a> of using it.
+  <dd>
+
+  <dt>
+  <li> <a href="svgDev.R">Simple SVG graphics device
+      prototype</a>  and <a href="svgEg.R">some examples</a> of using it.
+  <dd>      
+
+  <dt>
+  <li> <a href="implementation.html">Notes on the design</a>
+  <dd> And also the <a href="tu.R">code used to generate the code</a>
+
+  <dt>
+  <li> <a href="Todo.html">Todo list</a>
+  <dd>
+</dl>
+
+
+<h2>The Code</h2>
+The code for this package consists of C and R code.
+98% of the C code and 70% of the R code was programmatically
+generated using the <a
+href="../RGCCTranslationUnit">RGCCTranslationUnit</a> package.
+The R code to generate (most of) the code in this package is
+<a href="tu.R">available here</a>.
+There is a description of the process for generating the
+code <a href="implementation.pdf">here</a>.
+
+
+
+
+
+
+<hr>
+<address><a href="http://www.stat.ucdavis.edu/~duncan">Duncan Temple Lang</a>
+<a href=mailto:duncan@wald.ucdavis.edu>&lt;duncan@wald.ucdavis.edu&gt;</a></address>
+<!-- hhmts start -->
+Last modified: Tue Oct 13 16:28:47 PDT 2009
+<!-- hhmts end -->
+</body> </html>

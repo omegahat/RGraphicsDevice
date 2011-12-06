@@ -1,0 +1,1090 @@
+Duncan-Temple-Langs-MacBook-Pro[tests-51]>R
+
+R Under development (unstable) (2011-08-03 r56613)
+Copyright (C) 2011 The R Foundation for Statistical Computing
+ISBN 3-900051-07-0
+Platform: x86_64-apple-darwin11.0.0 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+PID = 93544 
+> library(RGraphicsDevice)
+
+devFuns = dummyDevice( newFrameConfirm = function(dev){ print("newFrameConfirm"); TRUE },
+                       circle = function(...) { cat("in circle\n") },
+                       strWidthUTF8 = function(str, gcontext, dev) { print("strWidthUTF8"); nchar(str) * 12},
+                       strWidth = function(str, gcontext, dev) { print("strWidth"); nchar(str) * 12})
+
+dev = graphicsDevice("MyDevice",  funcs = devFuns)
+Loading required package: RAutoGenRunTime
+Loading required package: bitops
+using .First.lib() as .onLoad() for namespace œôòøbitopsœôòù
+> > + + + > > > library(lattice)
+> xyplot(mpg ~ wt | cyl, mtcars)
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+> n
+Error: object 'n' not found
+No suitable frames for recover()
+> q()
+Save workspace image? [y/n/c]: n
+Duncan-Temple-Langs-MacBook-Pro[tests-52]>R
+
+R Under development (unstable) (2011-08-03 r56613)
+Copyright (C) 2011 The R Foundation for Statistical Computing
+ISBN 3-900051-07-0
+Platform: x86_64-apple-darwin11.0.0 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+PID = 93548 
+library(RGraphicsDevice)
+> library(RGraphicsDevice)
+Loading required package: RAutoGenRunTime
+Loading required package: bitops
+using .First.lib() as .onLoad() for namespace œôòøbitopsœôòù
+> dev = graphicsDevice("MyDevice")
+Error in function (classes, fdef, mtable)  : 
+  unable to find an inherited method for function "graphicsDevice", for signature "character", "missing", "missing", "missing", "missing", "missing"
+
+Enter a frame number, or 0 to exit   
+
+1: graphicsDevice("MyDevice")
+2: function (classes, fdef, mtable) 
+
+Selection: 0
+> dev = graphicsDevice("MyDevice", funcs =list())
+> library(lattice)
+   # Problem.
+xyplot(mpg ~ wt | cyl, mtcars)
+library(lattice)
+>    # Problem.
+> xyplot(mpg ~ wt | cyl, mtcars)
+Error in grid.Call.graphics("L_setviewport", pvp, TRUE) : 
+  Non-finite location and/or size for viewport
+
+Enter a frame number, or 0 to exit   
+
+1: print(list(formula = mpg ~ wt | cyl, as.table = FALSE, aspect.fill 
+2: print.trellis(list(formula = mpg ~ wt | cyl, as.table = FALSE, aspe
+3: printFunction(x, ...)
+4: drawInViewport(xlab, viewport(layout.pos.row = pos.heights$xlab, la
+5: pushViewport(vp)
+6: lapply(vps, push.vp, recording)
+7: FUN(X[[1]], ...)
+8: push.vp.viewport(X[[1]], ...)
+9: grid.Call.graphics("L_setviewport", pvp, TRUE)
+
+Selection: 0
+> q()
+Save workspace image? [y/n/c]: n
+Duncan-Temple-Langs-MacBook-Pro[tests-53]>R
+
+R Under development (unstable) (2011-08-03 r56613)
+Copyright (C) 2011 The R Foundation for Statistical Computing
+ISBN 3-900051-07-0
+Platform: x86_64-apple-darwin11.0.0 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+PID = 93551 
+> library(RGraphicsDevice)
+Loading required package: RAutoGenRunTime
+Loading required package: bitops
+using .First.lib() as .onLoad() for namespace œôòøbitopsœôòù
+> devFuns = dummyDevice( newFrameConfirm = function(dev){ print("newFrameConfirm"); TRUE },
+                       circle = function(...) { cat("in circle\n") })
+                    
+devFuns = dummyDevice( newFrameConfirm = function(dev){ print("newFrameConfirm"); TRUE },
++                        circle = function(...) { cat("in circle\n") })
+>                     
+> dev = graphicsDevice("MyDevice",  funcs = devFuns)
+> library(lattice)
+xyplot(mpg ~ wt | cyl, mtcars)
+library(lattice)
+> xyplot(mpg ~ wt | cyl, mtcars)
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+> q()
+Save workspace image? [y/n/c]: n
+Duncan-Temple-Langs-MacBook-Pro[tests-54]>R
+
+R Under development (unstable) (2011-08-03 r56613)
+Copyright (C) 2011 The R Foundation for Statistical Computing
+ISBN 3-900051-07-0
+Platform: x86_64-apple-darwin11.0.0 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+PID = 93554 
+> library(RGraphicsDevice)
+Loading required package: RAutoGenRunTime
+Loading required package: bitops
+using .First.lib() as .onLoad() for namespace œôòøbitopsœôòù
+> devFuns = dummyDevice(
+                       circle = function(...) { cat("in circle\n") })
+devFuns = dummyDevice(
++                        circle = function(...) { cat("in circle\n") })
+> dev = graphicsDevice("MyDevice",  funcs = devFuns)
+library(lattice)
+xyplot(mpg ~ wt | cyl, mtcars)
+dev = graphicsDevice("MyDevice",  funcs = devFuns)
+> library(lattice)
+> xyplot(mpg ~ wt | cyl, mtcars)
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+> q()
+Save workspace image? [y/n/c]: n
+Duncan-Temple-Langs-MacBook-Pro[tests-55]>R
+
+R Under development (unstable) (2011-08-03 r56613)
+Copyright (C) 2011 The R Foundation for Statistical Computing
+ISBN 3-900051-07-0
+Platform: x86_64-apple-darwin11.0.0 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+PID = 93557 
+> dev = graphicsDevice("MyDevice",  funcs = devFuns)
+library(lattice)
+xyplot(mpg ~ wt | cyl, mtcars)
+dev = graphicsDevice("MyDevice",  funcs = devFuns)
+Error: could not find function "graphicsDevice"
+No suitable frames for recover()
+> library(lattice)
+> xyplot(mpg ~ wt | cyl, mtcars)
+> q()
+Save workspace image? [y/n/c]: n
+Duncan-Temple-Langs-MacBook-Pro[tests-56]>
+Duncan-Temple-Langs-MacBook-Pro[tests-56]>R
+
+R Under development (unstable) (2011-08-03 r56613)
+Copyright (C) 2011 The R Foundation for Statistical Computing
+ISBN 3-900051-07-0
+Platform: x86_64-apple-darwin11.0.0 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+PID = 93560 
+> library(RGraphicsDevice)
+Loading required package: RAutoGenRunTime
+Loading required package: bitops
+using .First.lib() as .onLoad() for namespace œôòøbitopsœôòù
+> devFuns = dummyDevice( newFrameConfirm = function(dev){ print("newFrameConfirm"); TRUE },
+                       strWidthUTF8 = function(str, gcontext, dev) { print("strWidthUTF8"); nchar(str) * 12},
+                       strWidth = function(str, gcontext, dev) { print("strWidth"); nchar(str) * 12})
+
+devFuns = dummyDevice( newFrameConfirm = function(dev){ print("newFrameConfirm"); TRUE },
++                        strWidthUTF8 = function(str, gcontext, dev) { print("strWidthUTF8"); nchar(str) * 12},
++                        strWidth = function(str, gcontext, dev) { print("strWidth"); nchar(str) * 12})
+> 
+> dev = graphicsDevice("MyDevice",  funcs = devFuns)
+> library(lattice)
+xyplot(mpg ~ wt | cyl, mtcars)
+library(lattice)
+> xyplot(mpg ~ wt | cyl, mtcars)
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+[1] "strWidth"
+> devFuns
+An object of class "RDevDescMethods"
+Slot "activate":
+NULL
+
+Slot "circle":
+NULL
+
+Slot "clip":
+NULL
+
+Slot "close":
+NULL
+
+Slot "deactivate":
+NULL
+
+Slot "locator":
+NULL
+
+Slot "line":
+NULL
+
+Slot "metricInfo":
+function (char, gc, ascent, descent, width, dev) 
+{
+    width[1] = gc$ps * gc$cex
+    ascent[1] = 1
+    descent[1] = 0.25
+}
+<environment: 0x7fb84227aa30>
+
+Slot "mode":
+NULL
+
+Slot "newPage":
+NULL
+
+Slot "polygon":
+NULL
+
+Slot "polyline":
+NULL
+
+Slot "rect":
+NULL
+
+Slot "size":
+function (left, right, bottom, top, dev) 
+{
+    right[1] = dev$right
+    bottom[1] = dev$bottom
+}
+<environment: 0x7fb8427470d0>
+
+Slot "strWidth":
+Error in `Encoding<-`(`*tmp*`, value = enc) : 
+  'value' must be of positive length
+
+Enter a frame number, or 0 to exit   
+
+1: function (object) 
+2: function (object) 
+3: showDefault(object, FALSE)
+4: print(slot(object, what))
+5: print.function(slot(object, what))
+6: as.character(c(3, 35, 3, 100, 35, 100, 3, 3))
+7: as.character.srcref(c(3, 35, 3, 100, 35, 100, 3, 3))
+8: `Encoding<-`(`*tmp*`, value = enc)
+
+Selection: 0
+> 
+> q()
+Save workspace image? [y/n/c]: n
+Duncan-Temple-Langs-MacBook-Pro[tests-57]>R
+
+R Under development (unstable) (2011-08-03 r56613)
+Copyright (C) 2011 The R Foundation for Statistical Computing
+ISBN 3-900051-07-0
+Platform: x86_64-apple-darwin11.0.0 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+PID = 93565 
+> library(RGraphicsDevice)
+Loading required package: RAutoGenRunTime
+Loading required package: bitops
+using .First.lib() as .onLoad() for namespace œôòøbitopsœôòù
+> devFuns = dummyDevice(circle = function(...) { cat("in circle\n") })
+> dev = graphicsDevice("MyDevice",  funcs = devFuns)
+library(lattice)
+xyplot(mpg ~ wt | cyl, mtcars)
+*** output flushed ***
+> q()
+Save workspace image? [y/n/c]: n
+Duncan-Temple-Langs-MacBook-Pro[tests-58]>R
+
+R Under development (unstable) (2011-08-03 r56613)
+Copyright (C) 2011 The R Foundation for Statistical Computing
+ISBN 3-900051-07-0
+Platform: x86_64-apple-darwin11.0.0 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+PID = 93568 
+> library(RGraphicsDevice)
+library(lattice)
+library(RGraphicsDevice)
+Loading required package: RAutoGenRunTime
+Loading required package: bitops
+using .First.lib() as .onLoad() for namespace œôòøbitopsœôòù
+> library(lattice)
+> devFuns = dummyDevice(circle = function(...) { cat("in circle\n") })
+> slotNames(devFuns)
+ [1] "activate"        "circle"          "clip"           
+ [4] "close"           "deactivate"      "locator"        
+ [7] "line"            "metricInfo"      "mode"           
+[10] "newPage"         "polygon"         "polyline"       
+[13] "rect"            "size"            "strWidth"       
+[16] "text"            "onExit"          "getEvent"       
+[19] "newFrameConfirm" "textUTF8"        "strWidthUTF8"   
+[22] "initDevice"      "GEInitDevice"    "state"          
+> q()
+Save workspace image? [y/n/c]: n
+Duncan-Temple-Langs-MacBook-Pro[tests-59]>R
+
+R Under development (unstable) (2011-08-03 r56613)
+Copyright (C) 2011 The R Foundation for Statistical Computing
+ISBN 3-900051-07-0
+Platform: x86_64-apple-darwin11.0.0 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+PID = 93570 
+> library(RGraphicsDevice)
+library(lattice)
+library(RGraphicsDevice)
+Loading required package: RAutoGenRunTime
+Loading required package: bitops
+using .First.lib() as .onLoad() for namespace œôòøbitopsœôòù
+> library(lattice)
+> devFuns = dummyDevice(clip = function(...) { cat("in circle\n") })
+> dev = graphicsDevice("MyDevice",  funcs = devFuns)
+xyplot(mpg ~ wt | cyl, mtcars)
+dev.off()
+*** output flushed ***
+> source("../inst/examples/IdentifyElements/device.R")
+> dev = metaDev(c(1000, 1000))
+> xyplot(mpg ~ wt | cyl, mtcars)
+Error in grid.Call.graphics("L_setviewport", pvp, TRUE) : 
+  Non-finite location and/or size for viewport
+
+Enter a frame number, or 0 to exit   
+
+1: print(list(formula = mpg ~ wt | cyl, as.table = FALSE, aspect.fill 
+2: print.trellis(list(formula = mpg ~ wt | cyl, as.table = FALSE, aspe
+3: printFunction(x, ...)
+4: drawInViewport(xlab, viewport(layout.pos.row = pos.heights$xlab, la
+5: pushViewport(vp)
+6: lapply(vps, push.vp, recording)
+7: FUN(X[[1]], ...)
+8: push.vp.viewport(X[[1]], ...)
+9: grid.Call.graphics("L_setviewport", pvp, TRUE)
+
+Selection: 0
+> q()
+Save workspace image? [y/n/c]: n
+Duncan-Temple-Langs-MacBook-Pro[tests-60]>R
+
+R Under development (unstable) (2011-08-03 r56613)
+Copyright (C) 2011 The R Foundation for Statistical Computing
+ISBN 3-900051-07-0
+Platform: x86_64-apple-darwin11.0.0 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+PID = 93583 
+> library(RGraphicsDevice)
+library(lattice)
+library(RGraphicsDevice)
+Loading required package: RAutoGenRunTime
+Loading required package: bitops
+using .First.lib() as .onLoad() for namespace œôòøbitopsœôòù
+> library(lattice)
+> source("../inst/examples/IdentifyElements/device.R")
+> dev = metaDev()
+> xyplot(mpg ~ wt | cyl, mtcars)
+Error in grid.Call.graphics("L_setviewport", pvp, TRUE) : 
+  Non-finite location and/or size for viewport
+
+Enter a frame number, or 0 to exit   
+
+1: print(list(formula = mpg ~ wt | cyl, as.table = FALSE, aspect.fill 
+2: print.trellis(list(formula = mpg ~ wt | cyl, as.table = FALSE, aspe
+3: printFunction(x, ...)
+4: drawInViewport(xlab, viewport(layout.pos.row = pos.heights$xlab, la
+5: pushViewport(vp)
+6: lapply(vps, push.vp, recording)
+7: FUN(X[[1]], ...)
+8: push.vp.viewport(X[[1]], ...)
+9: grid.Call.graphics("L_setviewport", pvp, TRUE)
+
+Selection: 0
+> q()
+Save workspace image? [y/n/c]: n
+Duncan-Temple-Langs-MacBook-Pro[tests-61]>R
+
+R Under development (unstable) (2011-08-03 r56613)
+Copyright (C) 2011 The R Foundation for Statistical Computing
+ISBN 3-900051-07-0
+Platform: x86_64-apple-darwin11.0.0 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+PID = 93586 
+> library(RGraphicsDevice)
+library(lattice)
+library(RGraphicsDevice)
+Loading required package: RAutoGenRunTime
+Loading required package: bitops
+using .First.lib() as .onLoad() for namespace œôòøbitopsœôòù
+> library(lattice)
+> source("../inst/examples/IdentifyElements/device.R")
+> dev = metaDev()
+> xyplot(mpg ~ wt | cyl, mtcars)
+Error in grid.Call.graphics("L_setviewport", pvp, TRUE) : 
+  Non-finite location and/or size for viewport
+
+Enter a frame number, or 0 to exit   
+
+1: print(list(formula = mpg ~ wt | cyl, as.table = FALSE, aspect.fill 
+2: print.trellis(list(formula = mpg ~ wt | cyl, as.table = FALSE, aspe
+3: printFunction(x, ...)
+4: drawInViewport(xlab, viewport(layout.pos.row = pos.heights$xlab, la
+5: pushViewport(vp)
+6: lapply(vps, push.vp, recording)
+7: FUN(X[[1]], ...)
+8: push.vp.viewport(X[[1]], ...)
+9: grid.Call.graphics("L_setviewport", pvp, TRUE)
+
+Selection: 0
+> q()
+Save workspace image? [y/n/c]: n
+Duncan-Temple-Langs-MacBook-Pro[tests-62]>R
+
+R Under development (unstable) (2011-08-03 r56613)
+Copyright (C) 2011 The R Foundation for Statistical Computing
+ISBN 3-900051-07-0
+Platform: x86_64-apple-darwin11.0.0 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+PID = 93589 
+> source("lattice.R")
+Loading required package: RAutoGenRunTime
+Loading required package: bitops
+using .First.lib() as .onLoad() for namespace œôòøbitopsœôòù
+> graphicsDevice
+standardGeneric for "graphicsDevice" defined from package "RGraphicsDevice"
+
+function (name, dim = c(1024, 768), col = "black", fill = "transparent", 
+    ps = 10, ..., funcs = list(...), ipr = rep(1/72.27, 2)) 
+standardGeneric("graphicsDevice")
+<environment: 0x7fcc029e1ae0>
+Methods may be defined for arguments: name, dim, col, fill, ps, funcs, ipr
+Use  showMethods("graphicsDevice")  for currently available ones.
+> q()
+Save workspace image? [y/n/c]: n
+Duncan-Temple-Langs-MacBook-Pro[tests-63]>R
+
+R Under development (unstable) (2011-08-03 r56613)
+Copyright (C) 2011 The R Foundation for Statistical Computing
+ISBN 3-900051-07-0
+Platform: x86_64-apple-darwin11.0.0 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+PID = 93592 
+> source("../inst/examples/IdentifyElements/device.R")
+Loading required package: RAutoGenRunTime
+Loading required package: bitops
+using .First.lib() as .onLoad() for namespace œôòøbitopsœôòù
+> dev = metaDev()
+Error in function (classes, fdef, mtable)  : 
+  unable to find an inherited method for function "graphicsDevice", for signature "character", "RDevDescMethods", "missing", "missing", "missing", "missing"
+
+Enter a frame number, or 0 to exit   
+
+1: metaDev()
+2: device.R#94: graphicsDevice("foo", dev)
+3: device.R#94: function (classes, fdef, mtable) 
+
+Selection: 0
+> q()
+Save workspace image? [y/n/c]: n
+Duncan-Temple-Langs-MacBook-Pro[tests-64]>R
+
+R Under development (unstable) (2011-08-03 r56613)
+Copyright (C) 2011 The R Foundation for Statistical Computing
+ISBN 3-900051-07-0
+Platform: x86_64-apple-darwin11.0.0 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+PID = 93598 
+> install.packages('mmap')
+*** output flushed ***
+> packageDescription("mmap")
+Package: mmap
+Type: Package
+Title: Map Pages of Memory
+Version: 0.6-1
+Date: 2011-02-04
+Author: Jeffrey A. Ryan
+LazyLoad: yes
+Maintainer: Jeffrey A. Ryan <jeff.a.ryan@gmail.com>
+Description: R interface to POSIX mmap and Window's
+       MapViewOfFile
+License: GPL-3
+Packaged: 2011-02-04 12:49:46 UTC; jryan
+Repository: CRAN
+Date/Publication: 2011-02-04 19:12:58
+Built: R 2.14.0; x86_64-apple-darwin11.0.0; 2011-08-05 13:46:19
+       UTC; unix
+
+-- File: /Users/duncan/Rpackages/mmap/Meta/package.rds 
+> q()
+Save workspace image? [y/n/c]: n
+Duncan-Temple-Langs-MacBook-Pro[tests-65]>R
+
+R Under development (unstable) (2011-08-03 r56613)
+Copyright (C) 2011 The R Foundation for Statistical Computing
+ISBN 3-900051-07-0
+Platform: x86_64-apple-darwin11.0.0 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+PID = 94244 
+> library(RGraphicsDevice)
+library(lattice)
+library(RGraphicsDevice)
+Loading required package: RAutoGenRunTime
+Loading required package: bitops
+using .First.lib() as .onLoad() for namespace œôòøbitopsœôòù
+> library(lattice)
+> source("../inst/examples/IdentifyElements/device.R")
+> xyplot(mpg ~ wt | cyl, mtcars)
+> metaDev()
+*** output flushed ***
+> xyplot(mpg ~ wt | cyl, mtcars)
+Error in grid.Call.graphics("L_setviewport", pvp, TRUE) : 
+  Non-finite location and/or size for viewport
+
+Enter a frame number, or 0 to exit   
+
+1: print(list(formula = mpg ~ wt | cyl, as.table = FALSE, aspect.fill 
+2: print.trellis(list(formula = mpg ~ wt | cyl, as.table = FALSE, aspe
+3: printFunction(x, ...)
+4: drawInViewport(xlab, viewport(layout.pos.row = pos.heights$xlab, la
+5: pushViewport(vp)
+6: lapply(vps, push.vp, recording)
+7: FUN(X[[1]], ...)
+8: push.vp.viewport(X[[1]], ...)
+9: grid.Call.graphics("L_setviewport", pvp, TRUE)
+
+Selection: q()
+Enter an item from the menu, or 0 to exit
+Selection: 0
+> q()
+Save workspace image? [y/n/c]: n
+Duncan-Temple-Langs-MacBook-Pro[tests-66]>R
+
+R Under development (unstable) (2011-08-03 r56613)
+Copyright (C) 2011 The R Foundation for Statistical Computing
+ISBN 3-900051-07-0
+Platform: x86_64-apple-darwin11.0.0 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+PID = 94246 
+> source("lattice.R")
+Loading required package: RAutoGenRunTime
+Loading required package: bitops
+using .First.lib() as .onLoad() for namespace œôòøbitopsœôòù
+> q()
+Save workspace image? [y/n/c]: n
+Duncan-Temple-Langs-MacBook-Pro[tests-67]>R
+
+R Under development (unstable) (2011-08-03 r56613)
+Copyright (C) 2011 The R Foundation for Statistical Computing
+ISBN 3-900051-07-0
+Platform: x86_64-apple-darwin11.0.0 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+PID = 94250 
+> source("lattice.R")
+Loading required package: RAutoGenRunTime
+Loading required package: bitops
+using .First.lib() as .onLoad() for namespace œôòøbitopsœôòù
+> dev = graphicsDevice("MyDevice",  funcs = devFuns)
+xyplot(mpg ~ wt | cyl, mtcars)
+dev = graphicsDevice("MyDevice",  funcs = devFuns)
+> xyplot(mpg ~ wt | cyl, mtcars)
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+in circle
+> 

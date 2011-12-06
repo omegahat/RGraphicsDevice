@@ -1,0 +1,59 @@
+R_Preserve object when setting function in RDevDescMethods
+and also if the current value is not NULL or R_NilValue, R_ReleaseObject
+
+Provide our own type for deviceSpecific before generating the code
+  so that it returns us an RDevDescMethods
+  See implementation.xml for creating this structure and then we can assign 
+  it to a@fields$deviceSpecific@type.
+
+When we see a void *, we have a name of NA.
+  e.g. deviceSpecific 
+  When we have a  Pointer to a void.
+  get routine has a copy parameter but this is meaningless and we end up doing unnecessary
+  computation when returning the value .
+
+char arrays, e.g. font family.
+   Need declaration of convertCharArrayToR
+   R_GE_gcontext
+   gecontext = resolveType(ds$R_GE_gcontext, tu)
+   gecontext@fields$fontfamily@type@name
+   generateStructInterface(gecontext, DefinitionContainer(tu))
+
+    Do we need to add a \0 to the end of the array. Is this to be treated as a string or a character vector of individual string elemnts
+    of length 1. Yes, the latter: a 201 length character vector in R.
+    Or should we treat this as a sequence of characters and return a vector of individual character elements.
+
+    The set_ methods for a char[] end up calling 
+   
+
+[Done] Rboolean maps to logical.
+  can't set the value because treating as an enum.
+  We want to use the typeMap.
+  Alternatively, we can resolve it "prematurely" and introduce it as a logical
+  by putting it into the DefinitionContainer before we resolve anything.
+
+    map = list("Rboolean" = list(convertValueToR = function(name, param, ...)
+                                                        sprintf("ScalarLogical(%s)", name),
+                                 convertRValue = function(to, name, parm, ...) {
+                                                    sprintf("%s = LOGICAL(%s)[0]", to, name@name[length(name@name)])
+                                                  },
+                                 coerceRValue = function(name, parm, ...) {
+                                                    sprintf("as.logical(%s)", name)
+                                                }))
+     convertValueToR("foo", a@fields$canClip@type, typeMap = map)
+     convertRValue("", "x", a@fields$canClip@type, typeMap = map) 
+     coerceRValue("x", a@fields$canClip@type, typeMap = map) 
+
+
+   Add typeMap to calls to createDuplicateStruct, createCopyStruct, convertRValue
+                           generateStaticClassVariableCode
+
+
+[Done] charPtr in Axis
+  convertValueToR - added method
+  Check with
+     createProxyRCall(funs[["strWidth"]]@type, "R_circle", "((RDevDescMethods*) (r5->deviceSpecific))->circle")
+
+crashing on some occassions if there is an error
+  Probably fixed if we handle the NULL functions, but check via 
+

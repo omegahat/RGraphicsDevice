@@ -1,0 +1,391 @@
+<article xmlns:c="http://www.C.org"
+         xmlns:r="http://www.r-project.org">
+
+<title>Implementing the RGraphicsDevice package</title>
+
+<section>
+<title>Motivation</title>
+<para>
+The idea is to try to automate much of this as there is very little
+going on. Essentially, for a graphics device, we need to provide C
+routines that implement each of the function pointer fields.  Each
+must accept its arguments, convert them to R objects, call the
+corresponding R function, converting the result to the corresponding C
+type and returning that to the R graphics engine.  This is a job for
+the RGCCTranslationUnit package.  In addition to implementing these
+simple C routines, we also want to provide R programmers with access
+to the fields of the data structures.
+</para>
+</section>
+
+<section r:eval="false">
+<title>Exploring the data structures</title>
+<para>
+We first start by generating a translation unit description for the
+R graphics device structure. 
+We do this by creating a C file that includes Rinternals, R_ext/GraphicsEngine.h and
+R_ext/GraphicsDevice. Then we create the TU file from that by compiling
+that file with gcc and the flag -fdump-translation-unit.
+This is done in the TU directory of this package.
+</para>
+<para>
+Given the TU file, let's read it into R and look at the data structures.
+<r:code>
+library(RGCCTranslationUnit)
+tu = parseTU("TU/gd.c.t00.tu")
+ds = getDataStructures(tu) 
+</r:code>
+We know which structure(s) we want, namely the <c:type>DevDesc</c:type>.
+The following returns a <r:class>ResolvedTypeReference</r:class>
+so we resolve it again to get the <r:class>StructDefinition</r:class>:
+<r:code>
+DevDesc = resolveType(ds$DevDesc, tu)
+DevDesc = resolveType(DevDesc, tu)
+</r:code>
+This contains a description of the fields, amongst other details.
+</para>
+<para>
+Now, let's look at the function pointers which are like "methods"
+for an instance of a device.
+<r:code>
+i = sapply(DevDesc@fields, function(x) class(x@type)) == "FunctionPointer"
+funs = DevDesc@fields[i]
+
+ # ensure that the parameters, etc. are fully resolved
+funs = lapply(funs, function(x) {
+                      x@type = resolveType(x@type, tu)
+                      x
+                    })
+</r:code>
+The <r:func>lapply</r:func> call ensures that the parameters are all fully resolved.
+</para>
+<para>
+Let's look at the types of the parameters in these function pointers:
+<r:code>
+table(sapply(unlist(sapply(funs, function(x) 
+                                   lapply(x@type@parameters, slot, "type")), 
+                    recursive = FALSE), 
+      class))
+<r:output><![CDATA[
+          CString        doubleType           intType       PointerType
+                5                23                 4                13
+TypedefDefinition
+               32
+]]></r:output>
+</r:code>
+So we see the basic types (integers, doubles, character strings)
+and a typedef and pointers.
+We'll dig down further into these generic pointers and typedefs:
+<r:code>
+params = unlist(sapply(funs, function(x) lapply(x@type@parameters, slot, "type")), recursive = FALSE)
+f = function(x)  {
+           if(is(x, "PendingType") || is(x, "ResolvedTypeReference"))
+              x = resolveType(x, tu)
+           if(is(x, "PointerType") || is(x, "TypedefDefinition")) 
+              f(x@type)
+           else 
+              x
+         }
+tp = sapply(params, f)
+table(sapply(tp, function(x) 
+                    if(is(x, "StructDefinition")) 
+                      x@name 
+                    else if(is(x, "PendingType")) 
+                      x@name 
+                    else class(x)))
+<r:output><![CDATA[
+     charType    doubleType       intType      pDevDesc R_GE_gcontext
+            5            36             4            20            11
+      SEXPREC
+            1
+]]></r:output>
+</r:code>
+So we see a pointer to a DevDesc, R_GE_gcontext and the regular 
+R object type in C (SEXP or SEXPREC).
+</para>
+<para>
+Let's also look at the non-function pointer fields:
+<r:code>
+names(DevDesc@fields[!i])
+<r:output><![CDATA[
+ [5] "clipLeft"                "clipRight"
+ [7] "clipBottom"              "clipTop"
+ [9] "xCharOffset"             "yCharOffset"
+[11] "yLineBias"               "ipr"
+[13] "cra"                     "gamma"
+[15] "canClip"                 "canChangeGamma"
+[17] "canHAdj"                 "startps"
+[19] "startcol"                "startfill"
+[21] "startlty"                "startfont"
+[23] "startgamma"              "deviceSpecific"
+[25] "displayListOn"           "canGenMouseDown"
+[27] "canGenMouseMove"         "canGenMouseUp"
+[29] "canGenKeybd"             "gettingEvent"
+[31] "hasTextUTF8"             "wantSymbolUTF8"
+[33] "useRotatedTextInContour" "reserved"
+]]></r:output>
+table(sapply(DevDesc@fields[!i], function(x)  class(x@type)))
+<r:output><![CDATA[
+ArrayType            doubleType EnumerationDefinition
+         3                    14                    11
+   intType           PointerType
+         5                     1
+]]></r:output>
+</r:code>
+These maintain the state of the graphics device.
+We will want access to these values, to both query and set them.
+</para>
+</section>
+
+<section r:eval="false">
+<title>The Desired Code</title>
+<para>
+Ideally, we would simply call generateStructInterface.
+This will handle generating much of the interface, but
+there are different considerations we want to explore.
+Firstly, for each of our function pointers,
+we will have a C routine that provides a proxy.
+Each of these will find the corresponding R function
+for the device. If this is <r:null/>, the C routine
+does nothing. If there is an R function, it invokes that.
+</para>
+<para>
+How do we find the corresponding R function for a C routine?  We can
+either have a list of R functions or, alternatively, a C-level
+structure with a SEXP for each individual function.  The benefit of
+having a separate structure is slightly more direct access relative to
+calling <c:code>VECTOR_ELT(funs, i)</c:code> and having to use numbers/enums to index
+into that list, e.g. CIRCLE.
+So we would define a structure such as
+<c:code>
+typedef struct {
+  SEXP text;
+  SEXP strWidth;
+  SEXP size;
+    ..
+} RDevDescMethods; 
+</c:code>
+We could even use an array of SEXP objects rather than a struct
+as the offsets are fixed.
+</para>
+<para>
+
+We would then create an instance of this and store it in the
+<c:field>deviceSpecific</c:field> field of the 
+<c:type>pDevDesc</c:type> object.
+We will populate it with R functions. 
+We have an R function that has a parameter for each of the methods
+and creates an instance of this <c:type>RDevDescMethods</c:type>
+structure and fills in each value that is provided by the caller.
+We should test the number of parameters
+each function accepts to ensure they are compatible.
+</para>
+
+<para>
+So the top-level R function to create an R-level graphics device
+would look something like
+<r:code>
+createGraphicsDevice =
+function(text = NULL, line = NULL, circle = NULL, ...)
+{
+  devMethods = .Call("R_create_RDevDesc", text, line, circle, ....)
+  dev = .Call("R_create_DevDesc")
+  dev$deviceSpecific = .Call("R_createGraphicsDevice", devMethods)
+  dev$canClip = FALSE
+  dev$canHAdj = TRUE
+    ...
+
+  dev
+}
+</r:code>
+There may be an issue with registering the device before its fields
+are initialized, so we may need to separate creation and registration in R_createGraphicsDevice.
+</para>
+<para>
+The C routines that we set for the DevDesc function pointers will be something along the lines
+<c:code id="R_circle">
+void 
+R_circle(double x, double y, double r, const pGEcontext gc, pDevDesc dd)
+{
+  RDevDescMethods *methods = (RDevDescMethods *) dd->deviceSpecific;
+  SEXP e, cur;
+
+  if(!methods->circle || methods->circle == R_NilValue) 
+    return;
+
+  PROTECT(cur = e = allocVector(LANGSXP, 6));
+  SETCAR(cur, methods->circle); cur = CDR(cur);
+  SETCAR(cur, ScalarReal(x)); cur = CDR(cur);
+  SETCAR(cur, ScalarReal(y)); cur = CDR(cur);
+  SETCAR(cur, ScalarReal(r)); cur = CDR(cur);
+  SETCAR(cur, mkRef(gc, "GEcontext")); cur = CDR(cur);
+  SETCAR(cur, mkRef(dd, "DevDesc")); 
+
+  Rf_eval(e, R_GlobalEnv);
+}
+</c:code>
+Note that we could create each of these calls 
+just once and store those in the RDevDescMethod structure.
+This is just a minor modification to how we generate the code and would make the code more efficient.
+</para>
+<para>
+So we need a class definition for a reference to a DevDesc and also
+for a reference to a GEcontext.
+</para>
+</section>
+
+<section>
+<title>Generating the Code</title>
+<para>
+The first thing we can do is to create code for
+the <c:type>RDevDescMethods</c:type> type that we introduced
+earlier. This does not exist in the C code for the graphics device
+and is a construct for  our interface.
+We can write the definition and the accessor code for the
+fields. However, it is more convenient to programmatically
+generate this by "pretending" it was in the C code definitions 
+we read. We can programmatically construct a description
+of such a C-level structure.
+This is a structure with a SEXP for each of the function pointers
+in the <c:type>DevDesc</c:type> structure.
+So one thing we can do is to copy the <r:var>funs</r:var> 
+list describing the function pointers and change 
+the type of each to be a SEXP.
+<r:code>
+sexp = resolveType(ds$SEXP, tu)
+fields = lapply(funs, function(x) {
+                           x@type = sexp
+                           x
+                        })
+</r:code>
+Then we can create a StructDefinition object with
+these fields and put that within a TypedefDefinition
+to be able to refer to this via the name 
+<c:type>RDevDescMethods</c:type>:
+<r:code>
+devDescMethods = new("TypedefDefinition", 
+                     name = "RDevDescMethods",
+                     type = new("StructDefinition", 
+                                name = "RDevDescMethods",
+                                fields = fields))
+</r:code>
+We can now use all the  code generation facilities
+in RGCCTranslationUnit to create an interface to this
+data type.
+</para>
+
+<para>
+The next task is to create the C routines that will act as proxies
+and pass the C-level arguments to the corresponding R functions
+(see <xref linkend="R_circle"/>).
+We'll do this for just one (circle) and look at the result.
+We call <r:func>createProxyRCall</r:func> and give it the
+FunctionPointer that will be called. We also give it the name of 
+the C routine to define. And the third argument is 
+code C code to access the R function corresponding to this function.
+<r:code>
+createProxyRCall(funs[["circle"]]@type, "R_circle", 
+                   "((RDevDescMethods*) (r5->deviceSpecific))->circle")
+</r:code>
+So we do this for all of the function pointers with a "simple" loop.
+Unfortunately, the function pointer getEvent does not have a 
+parameter providing a DevDesc reference. This means we cannot readily
+access the device specific data and hence the corresponding R 
+function. So for the moment, we'll just exclude that.
+<r:code>
+funs = funs[ - match("getEvent", names(funs)) ]
+</r:code>
+Now we can generate the code for all the function pointers.
+<r:code>
+proxyNames = structure(paste("R", names(funs), sep = "_"), 
+                       names = names(funs))
+code = mapply(createProxyRCall,
+              lapply(funs, slot, "type"),
+              proxyNames,
+              paste("((RDevDescMethods*) ( r", 
+                    sapply(funs, function(x) length(x@type@parameters)), 
+                    "->deviceSpecific))->", names(funs), sep = ""))
+
+</r:code>
+<ignore>
+# Good to add but need to determine if void type or not and return or return(ans)
+#   paste("if(r", sapply(funs, function(x) length(x@type@parameters)), " == NULL || r",
+#   sapply(funs, function(x) length(x@type@parameters)), "->deviceSpecific == NULL) return(ans);", sep = ""))
+</ignore>
+Note that we have to know how many parameters there are for each routine to be able
+to correctly create the C code to access the <c:type>pDevDesc</c:type> parameter.
+It would be simpler if the compiler emitted the parameter names for a routine and we could refer to this
+as <c:var>dd</c:var> as it is in the header files.
+Unfortunately, this only happens for routine definitions, not declarations.
+</para>
+
+<para>
+The next thing to create is the code that initializes the DevDesc
+with these routines. We have the names in <r:var>proxyNames</r:var>, 
+so we can generate this code easily as (assuming a variable named
+<c:var>dd</c:var> representing the <c:type>pDevDesc</c:type>)
+<r:code>
+init = c("dd->deviceSpecific = calloc(1, sizeof(RDevDescMethods));",
+         "if(!dd->deviceSpecific) return(0);",
+         paste("dd ->", names(proxyNames), "=", proxyNames, ";"),
+         "return(1);")
+</r:code>
+We can put this in code we write or specify it as the body of a new C routine
+which we can call:
+<r:code>
+init = CRoutineDefinition("initializeDevDescMethods", 
+                          c("int", "initializeDevDescMethods(pDevDesc dd)", "{", init, "}"))
+</r:code>
+</para>
+<para>
+We'll manually write the code to create the graphics device and call this initialization
+routine as this is specialized code that depends on knowing R internals.
+See <c:routine>R_createGraphicsDevice</c:routine> in Rgd.c.
+</para>
+<para>
+(Need writeCode method for devDescMethods. Done now?)
+<r:code><![CDATA[
+con = file("src/proxy.c", "w")
+writeIncludes(c("<Rdefines.h>", "<R_ext/GraphicsEngine.h>", "<R_ext/GraphicsDevice.h>"), con)
+
+writeCode(devDescMethods@type, "C", con)
+writeCode(devDescMethods, "C", con)
+
+idevDescMethods = generateStructInterface(devDescMethods, DefinitionContainer(tu))
+writeCode(idevDescMethods, "C", con)
+writeCode(idevDescMethods, "R", "R/devDescMethods.R")
+
+cat(paste(sapply(code, as, "character"), collapse = "\n\n"), file = con)
+writeCode(init, "C", file = con)
+close(con)
+]]></r:code>
+</para>
+<para>
+Next we need an R function and C routine that sets the fields of the
+<c:type>RDevDescMethods</c:type>.  This is used to initialize the
+fields of the RDevDescMethods in the <c:field>deviceSpecific</c:field>
+field of the <c:type>DevDesc</c:type> structure.  We can have a single
+function that accepts values for all the fields and sets them in a
+single operation, or we can have individual routines to set each
+field. It is easy to create the latter using
+<r:func>generateStructInterface</r:func> (at least it is intended to
+be!) and this generates the corresponding class definition.  C routine
+to instantiate a C version, provide methods for getting and setting
+individual elements via the $ operatoretc, ...  We do this with the
+<r:func>generateStructInterface</r:func> call in the code above.
+
+</para>
+<para>
+After this, we need to be able to access and set the fields in the
+DevDesc. This is a run-time facility so that the R programmer
+can query and modify a particular graphics device.
+(See TU/tu.R for details.)
+<r:code>
+devDesc.sub = DevDesc
+devDesc.sub@fields = devDesc.sub@fields[!i] 
+idevDesc = generateStructInterface(devDesc.sub, DefinitionContainer(tu))
+</r:code>
+</para>
+</section>
+
+</article>

@@ -1,0 +1,1 @@
+SEXP createCircleCall(SEXP fun);

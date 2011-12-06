@@ -1,0 +1,4 @@
+PKG_CPPFLAGS=-I/Users/duncan/Rpackages/RAutoGenRunTime/include 
+#-DUSE_R_EXPRESSIONS=1
+
+

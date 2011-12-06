@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 800 1000" version="1.1">
+  <g id="surface0">
+    <rect x="0" y="0" width="800" height="1000" style="fill: rgb(100%,100%,100%); fill-opacity: 1; stroke: none;"/>
+    <circle cx="71.5586419753086" cy="911.404320987654" r="2.03125" style="stroke-width: 1; stroke: yellow; fill: none"/>
+    <circle cx="146.953017832647" cy="818.77743484225" r="2.03125" style="stroke-width: 1; stroke: blue; fill: none"/>
+    <circle cx="222.347393689986" cy="726.150548696845" r="2.03125" style="stroke-width: 1; stroke: yellow; fill: none"/>
+    <circle cx="297.741769547325" cy="633.52366255144" r="2.03125" style="stroke-width: 1; stroke: blue; fill: none"/>
+    <circle cx="373.136145404664" cy="540.896776406036" r="2.03125" style="stroke-width: 1; stroke: yellow; fill: none"/>
+    <circle cx="448.530521262003" cy="448.269890260631" r="2.03125" style="stroke-width: 1; stroke: blue; fill: none"/>
+    <circle cx="523.924897119341" cy="355.643004115226" r="2.03125" style="stroke-width: 1; stroke: yellow; fill: none"/>
+    <circle cx="599.319272976680" cy="263.016117969822" r="2.03125" style="stroke-width: 1; stroke: blue; fill: none"/>
+    <circle cx="674.713648834019" cy="170.389231824417" r="2.03125" style="stroke-width: 1; stroke: yellow; fill: none"/>
+    <circle cx="750.108024691358" cy="77.7623456790122" r="2.03125" style="stroke-width: 1; stroke: blue; fill: none"/>
+    <line x1="146.953017832647" y1="944.75" x2="750.108024691358" y2="944.75" style="stroke-width: 1; stroke: red; fill: none"/>
+    <line x1="146.953017832647" y1="944.75" x2="146.953017832647" y2="950.166666666667" style="stroke-width: 1; stroke: red; fill: none"/>
+    <line x1="297.741769547325" y1="944.75" x2="297.741769547325" y2="950.166666666667" style="stroke-width: 1; stroke: red; fill: none"/>
+    <line x1="448.530521262003" y1="944.75" x2="448.530521262003" y2="950.166666666667" style="stroke-width: 1; stroke: red; fill: none"/>
+    <line x1="599.319272976680" y1="944.75" x2="599.319272976680" y2="950.166666666667" style="stroke-width: 1; stroke: red; fill: none"/>
+    <line x1="750.108024691358" y1="944.75" x2="750.108024691358" y2="950.166666666667" style="stroke-width: 1; stroke: red; fill: none"/>
+    <text x="141.953017832647" y="966.416666666667" style="stroke-width: 1; stroke: black; fill: none">2</text>
+    <text x="292.741769547325" y="966.416666666667" style="stroke-width: 1; stroke: black; fill: none">4</text>
+    <text x="443.530521262003" y="966.416666666667" style="stroke-width: 1; stroke: black; fill: none">6</text>
+    <text x="594.319272976680" y="966.416666666667" style="stroke-width: 1; stroke: black; fill: none">8</text>
+    <text x="740.108024691358" y="966.416666666667" style="stroke-width: 1; stroke: black; fill: none">10</text>
+    <line x1="44.4166666666667" y1="818.77743484225" x2="44.4166666666667" y2="77.7623456790122" style="stroke-width: 1; stroke: red; fill: none"/>
+    <line x1="44.4166666666667" y1="818.77743484225" x2="39" y2="818.77743484225" style="stroke-width: 1; stroke: red; fill: none"/>
+    <line x1="44.4166666666667" y1="633.52366255144" x2="39" y2="633.52366255144" style="stroke-width: 1; stroke: red; fill: none"/>
+    <line x1="44.4166666666667" y1="448.269890260631" x2="39" y2="448.269890260631" style="stroke-width: 1; stroke: red; fill: none"/>
+    <line x1="44.4166666666667" y1="263.016117969822" x2="39" y2="263.016117969822" style="stroke-width: 1; stroke: red; fill: none"/>
+    <line x1="44.4166666666667" y1="77.7623456790122" x2="39" y2="77.7623456790122" style="stroke-width: 1; stroke: red; fill: none"/>
+    <text x="33.5833333333333" y="823.77743484225" style="stroke-width: 1; stroke: black; fill: none">2</text>
+    <text x="33.5833333333333" y="638.52366255144" style="stroke-width: 1; stroke: black; fill: none">4</text>
+    <text x="33.5833333333333" y="453.269890260631" style="stroke-width: 1; stroke: black; fill: none">6</text>
+    <text x="33.5833333333333" y="268.016117969821" style="stroke-width: 1; stroke: black; fill: none">8</text>
+    <text x="33.5833333333333" y="87.7623456790124" style="stroke-width: 1; stroke: black; fill: none">10</text>
+    <polyline points="44.4166666666667, 944.75 777.25, 944.75 777.25, 44.4166666666666 44.4166666666667, 44.4166666666666 44.4166666666667, 944.75" style="stroke-width: 1; stroke: red; fill: none"/>
+    <text x="362.833331425985" y="22.2083333333334" style="stroke-width: 1; stroke: black; fill: none">Hi there</text>
+    <text x="385.833333333333" y="988.083333333333" style="stroke-width: 1; stroke: black; fill: none">Index</text>
+    <text x="11.9166666666667" y="514.583333333333" style="stroke-width: 1; stroke: black; fill: none">1:10</text>
+    <line x1="71.5586419753086" y1="944.75" x2="71.5586419753086" y2="44.4166666666666" style="stroke-width: 1; stroke: blue; fill: none"/>
+    <line x1="146.953017832647" y1="944.75" x2="146.953017832647" y2="44.4166666666666" style="stroke-width: 1; stroke: blue; fill: none"/>
+    <line x1="222.347393689986" y1="944.75" x2="222.347393689986" y2="44.4166666666666" style="stroke-width: 1; stroke: blue; fill: none"/>
+    <line x1="297.741769547325" y1="944.75" x2="297.741769547325" y2="44.4166666666666" style="stroke-width: 1; stroke: blue; fill: none"/>
+    <line x1="373.136145404664" y1="944.75" x2="373.136145404664" y2="44.4166666666666" style="stroke-width: 1; stroke: blue; fill: none"/>
+    <line x1="448.530521262003" y1="944.75" x2="448.530521262003" y2="44.4166666666666" style="stroke-width: 1; stroke: blue; fill: none"/>
+    <line x1="523.924897119341" y1="944.75" x2="523.924897119341" y2="44.4166666666666" style="stroke-width: 1; stroke: blue; fill: none"/>
+    <line x1="599.319272976680" y1="944.75" x2="599.319272976680" y2="44.4166666666666" style="stroke-width: 1; stroke: blue; fill: none"/>
+    <line x1="674.713648834019" y1="944.75" x2="674.713648834019" y2="44.4166666666666" style="stroke-width: 1; stroke: blue; fill: none"/>
+    <line x1="750.108024691358" y1="944.75" x2="750.108024691358" y2="44.4166666666666" style="stroke-width: 1; stroke: blue; fill: none"/>
+    <line x1="44.4166666666667" y1="911.404320987654" x2="777.25" y2="911.404320987654" style="stroke-width: 3; stroke: red; fill: none"/>
+    <line x1="44.4166666666667" y1="818.77743484225" x2="777.25" y2="818.77743484225" style="stroke-width: 3; stroke: red; fill: none"/>
+    <line x1="44.4166666666667" y1="726.150548696845" x2="777.25" y2="726.150548696845" style="stroke-width: 3; stroke: red; fill: none"/>
+    <line x1="44.4166666666667" y1="633.52366255144" x2="777.25" y2="633.52366255144" style="stroke-width: 3; stroke: red; fill: none"/>
+    <line x1="44.4166666666667" y1="540.896776406036" x2="777.25" y2="540.896776406036" style="stroke-width: 3; stroke: red; fill: none"/>
+    <line x1="44.4166666666667" y1="448.269890260631" x2="777.25" y2="448.269890260631" style="stroke-width: 3; stroke: red; fill: none"/>
+    <line x1="44.4166666666667" y1="355.643004115226" x2="777.25" y2="355.643004115226" style="stroke-width: 3; stroke: red; fill: none"/>
+    <line x1="44.4166666666667" y1="263.016117969822" x2="777.25" y2="263.016117969822" style="stroke-width: 3; stroke: red; fill: none"/>
+    <line x1="44.4166666666667" y1="170.389231824417" x2="777.25" y2="170.389231824417" style="stroke-width: 3; stroke: red; fill: none"/>
+    <line x1="44.4166666666667" y1="77.7623456790122" x2="777.25" y2="77.7623456790122" style="stroke-width: 3; stroke: red; fill: none"/>
+  </g>
+</svg>

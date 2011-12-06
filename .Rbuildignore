@@ -1,0 +1,11 @@
+.*Rcheck.*
+plot1_10.svg
+.*autom4te.cache.*
+.*config.log
+.*config.status
+.*ctest.*
+devDesc.sub
+foo.swf
+foo.mxml
+isTransparent.html
+

@@ -1,0 +1,803 @@
+<article xmlns:r="http://www.r-project.org" 
+         xmlns:omg="http://www.omegahat.org"
+         xmlns:jsy="http://www.ecma-international.org/publications/standards" 
+         xmlns:js="http://www.ecma-international.org/publications/standards/Ecma-262.htm" 
+         xmlns:html="http://www.w3.org/TR/html401"
+         xmlns:xi="http://www.w3.org/2003/XInclude" >
+<title>A Guide to Implementing an R Graphics Device with the <omg:pkg>RGraphicsDevice</omg:pkg> package</title>
+<section>
+<title>Introduction</title>
+<para>
+The idea is that we provide this package so that others can write new
+graphics devices entirely in R.  An R programmer might create an SVG
+or Flash graphics device by writing R functions that implement the
+different graphical primitive operations needed by an R graphics
+device.
+
+</para>
+<para>
+To create a running graphics device with our own functions, we call
+the <r:func>graphicsDevice</r:func> function.  While there are several
+methods for this, essentially we give it a list of named functions
+that specify the implementation of some or all of the 21 graphical
+primitive operations.  We might give this as a list or as an instance
+of <r:class>RDevDescMethods</r:class> or of a sub-class that we define
+for a particular type of device.
+So we focus on writing these functions.
+</para>
+<para>
+The names of the functions can be found with 
+<r:output>
+ [1] "activate"        "circle"          "clip"            "close"          
+ [5] "deactivate"      "locator"         "line"            "metricInfo"     
+ [9] "mode"            "newPage"         "polygon"         "polyline"       
+[13] "rect"            "size"            "strWidth"        "text"           
+[17] "onExit"          "getEvent"        "newFrameConfirm" "textUTF8"       
+[21] "strWidthUTF8"   
+</r:output>
+Almost every graphics device will need to implement circle, line,
+rect, polygon, polyline, text and strWidth.  For non-interactive
+graphics devices, e.g.  those creating files that are displayed in a
+separate step, we don't need to implement locator, activate,
+deactivate, mode, getEvent.  onExit is also probably not necessary but
+can be of value for recovering from errors in evaluating code that
+produces graphics.  If we can handle UTF8 encoded strings, we can
+implement textUTF8 and strWidthUTF8, but this is not imperative.
+metricInfo allows the device to return information about the
+size of a character. A device does not have to provide this information.
+</para>
+<para>
+So now we must implement each of the important functions needed
+by our new device. To do this, we need the signatures,
+i.e. the number and the type of the arguments they will be passed
+when the R graphics engine invokes these.
+These are given in the following 
+with the name of the method and the comma-separate
+list of the R types of the parameters, and the number of parameters 
+on the right:
+<table>
+<title>Signatures of the device operations</title>
+<tgroup cols='2'>
+<colspec colname='a' colwidth="9*"/>
+<colspec colname='b' colwidth="1*" align="center"/>
+<thead><row><entry>signature</entry><entry># parameters</entry></row>
+</thead>
+<tbody>
+<row><entry>activate ( DevDescPtr )</entry><entry>  1</entry></row>
+<row><entry>circle ( numeric, numeric, numeric, R_GE_gcontextPtr, DevDescPtr )</entry><entry>  5</entry></row>
+<row><entry>clip ( numeric, numeric, numeric, numeric, DevDescPtr )</entry><entry>  5</entry></row>
+<row><entry>close ( DevDescPtr )</entry><entry>  1</entry></row>
+<row><entry>deactivate ( DevDescPtr )</entry><entry>  1</entry></row>
+<row><entry>getEvent ( ANY, character )</entry><entry>  2</entry></row>
+<row><entry>line ( numeric, numeric, numeric, numeric, R_GE_gcontextPtr, DevDescPtr )</entry><entry>  6</entry></row>
+<row><entry>locator ( numeric, numeric, DevDescPtr )</entry><entry>  3</entry></row>
+<row><entry>metricInfo ( integer, R_GE_gcontextPtr, numeric, numeric, numeric, DevDescPtr )</entry><entry>  6</entry></row>
+<row><entry>mode ( integer, DevDescPtr )</entry><entry>  2</entry></row>
+<row><entry>newFrameConfirm ( DevDescPtr )</entry><entry>  1</entry></row>
+<row><entry>newPage ( R_GE_gcontextPtr, DevDescPtr )</entry><entry>  2</entry></row>
+<row><entry>onExit ( DevDescPtr )</entry><entry>  1</entry></row>
+<row><entry>polygon ( integer, doublePtr, doublePtr, R_GE_gcontextPtr, DevDescPtr )</entry><entry>  5</entry></row>
+<row><entry>polyline ( integer, doublePtr, doublePtr, R_GE_gcontextPtr, DevDescPtr )</entry><entry>  5</entry></row>
+<row><entry>rect ( numeric, numeric, numeric, numeric, R_GE_gcontextPtr, DevDescPtr )</entry><entry>  6</entry></row>
+<row><entry>size ( doublePtr, doublePtr, doublePtr, doublePtr, DevDescPtr )</entry><entry>  5</entry></row>
+<row><entry>strWidth ( character, R_GE_gcontextPtr, DevDescPtr )</entry><entry>  3</entry></row>
+<row><entry>strWidthUTF8 ( character, R_GE_gcontextPtr, DevDescPtr )</entry><entry>  3</entry></row>
+<row><entry>text ( numeric, numeric, character, numeric, numeric, R_GE_gcontextPtr, DevDescPtr )</entry><entry>  7</entry></row>
+<row><entry>textUTF8 ( numeric, numeric, character, numeric, numeric, R_GE_gcontextPtr, DevDescPtr )</entry><entry>  7</entry></row>
+</tbody>
+</tgroup>
+</table>
+The choice of parameter names  is entirely up to you.
+</para>
+<para>
+The next topic we need to discuss is the set of classes
+that are new to R programmers and provided as part of this
+package. 
+These are <r:class>DevDescPtr</r:class>, <r:class>R_GE_gcontextPtr</r:class>,
+<r:class>doublePtr</r:class>.  The class <r:class>ANY</r:class> used in
+<r:func>getEvent</r:func> means what it says, i.e. any R object.
+</para>
+<para>
+Each of the methods is passed an object of class
+<r:class>DevDescPtr</r:class>.  This is also the type of the value
+returned by the top-level function <r:func>graphicsDevice</r:func>.
+This is a reference the C-level data structure that represents the
+graphics device.  We can use this to query the settings of the
+graphics device.  Some of these fields in the device are used when
+initializing the device rather than within the functions (e.g. those
+whose names are prefixed with "start"). Other fields are structural
+information about the rendering of different aspects of the
+device. For example, we can find the dimensions of the drawing area,
+The <r:class>DevDescPtr</r:class> class is essentially an opaque data
+type in R (containing an external pointer to the C-level data
+structure) and is intended to be used as if it were an R-level
+list. We can use the <r:op>$</r:op> operator to access individual
+fields and we can find the names of these fields with
+<r:func>names</r:func>. These are
+<r:output><!-- slotNames("DevDesc") or names(new("DevDescPtr"))-->
+ [1] "left"                    "right"                  
+ [3] "bottom"                  "top"                    
+ [5] "clipLeft"                "clipRight"              
+ [7] "clipBottom"              "clipTop"                
+ [9] "xCharOffset"             "yCharOffset"            
+[11] "yLineBias"               "ipr"                    
+[13] "cra"                     "gamma"                  
+[15] "canClip"                 "canChangeGamma"         
+[17] "canHAdj"                 "startps"                
+[19] "startcol"                "startfill"              
+[21] "startlty"                "startfont"              
+[23] "startgamma"              "deviceSpecific"         
+[25] "displayListOn"           "canGenMouseDown"        
+[27] "canGenMouseMove"         "canGenMouseUp"          
+[29] "canGenKeybd"             "gettingEvent"           
+[31] "hasTextUTF8"             "wantSymbolUTF8"         
+[33] "useRotatedTextInContour"
+</r:output>
+Under some rare circumstances, it is convenient to convert the reference
+to an R object.  We can do this by coercing it to the corresponding
+R class named <r:class>DevDesc</r:class> (i.e. with the "Ptr" remove),
+i.e. <r:expr>as(dev, "DevDesc")</r:expr>.  This copies each of the fields
+in the C-level structure to the corresponding slot in the R class.
+</para>
+<para>
+The second of these classes is <r:class>R_GE_gcontextPtr</r:class>.
+This is another reference to an instance of a C-level data type.
+This is the information about the "current" settings of the
+device. This gives us information about the current pen/foreground color,
+the background color, the setting for the gamma level, the line
+width, style, join, the character point size and expansion/magnification, 
+and the font information.
+The available fields  are
+<r:code>
+names(new("R_GE_gcontextPtr"))
+<r:output>
+ [1] "col"        "fill"       "gamma"      "lwd"        "lty"       
+ [6] "lend"       "ljoin"      "lmitre"     "cex"        "ps"        
+[11] "lineheight" "fontface"   "fontfamily"
+</r:output>
+</r:code>
+These are the values that your graphics device must reflect when it
+renders the display. These control the colors, line characteristics
+and fonts. 
+</para>
+<para>
+Many of these fields are scalar values.  <r:slot>lend</r:slot> and
+<r:slot>ljoin</r:slot> are special types that are enumeration
+constants.  These identify particular types of line endings and line
+joins.  <r:slot>fontfamily</r:slot> is a character vector with 201
+individual characters.
+</para>
+<para>
+The one other class of parameter is <r:class>doublePtr</r:class>.
+This is a simple reference to an R numeric vector.  The only thing
+that is needed to convert this to a numeric vector is the number of
+elements. In the two methods (<r:func>polyline</r:func> and
+<r:func>polygon</r:func>), we are given the length of the vector in
+the first parameter. This allows us to convert these references to R
+numeric vectors as <r:expr> x[ 1 : n ]</r:expr> where <r:var>n</r:var>
+is the length of the vector.
+</para>
+
+<para>
+So now that we know about the types in the functions, we can start to
+define the methods for a particular type of graphics device.  We'll focus on
+what these functions might do later. But first we'll talk about how we
+gather them together to form a device.  We can collect these functions
+in an instance of the <r:class>RDevDescMethods</r:class> class.  We
+first create an instance and then set the slots, e.g.
+<r:code>
+funs = new("RDevDescMethods")
+
+funs@activate = function(dev) { cat("Activating the device\n") }
+funs@line = 
+ function(x1, y1, x1, y1, gcontext, dev) {
+      # do something to render the line
+ }
+</r:code>
+Alternatively, we can collect the functions into a list and 
+coerce this to an <r:class>RDevDescMethods</r:class>.
+And when we are exploring an implementation, we might want
+to use functions that print the name of the method each time the are called.
+<r:func>dummyDevice</r:func> creates such an instance.
+</para>
+
+<section>
+<title>Initialization via <r:func>initDevice</r:func></title>
+<para>
+In addition to the twenty one graphical primitive methods in
+<r:class>RDevDescMethods</r:class>, there is also
+<r:func>initDevice</r:func> that is not called by the R graphics
+engine. If this is not <r:null/>, we call this just after creating the
+<r:class>DevDescPtr</r:class> object in C but before initializing and
+registering the device with the R graphics engine. This is an
+opportunity to set different fields in <r:class>DevDescPtr</r:class>
+such as the <r:slot>col</r:slot> and <r:slot>fill</r:slot> that are
+propagated through the graphics system when the device is initialized.
+Some of these parameters (<r:arg>col</r:arg>, <r:arg>fill</r:arg>,
+<r:arg>ps</r:arg>) can be specified directly in the call to
+<r:func>graphicsDevice</r:func> and if we are just setting these, we
+do not need a function for <r:func>initDevice</r:func>.  However, if
+we need to set additional fields, we can do so before the device is
+initialized by the graphics engine with
+<r:func>initDevice</r:func>. Alternatively, if we can set the fields
+of interest after the device is registered, we can do so directly with
+the return value of the call to <r:func>graphicsDevice</r:func>.
+</para>
+</section>
+
+<para>
+We should note that calling R functions from C is more expensive
+than calling C routines from C. Also, some of the
+operations that graphical primitive functions can
+be time consuming and implementing them in R
+can be very slow. For example, drawing many, m
+</para>
+
+</section>
+<section>
+<title>Examples</title>
+<para>
+The package contains two example devices.
+They do not produce polished graphics, but serve as prototypes
+for other to hopefully take and complete.
+These are in <dir>examples/JavaScriptCanvas</dir> and <dir>examples/SVG</dir>1
+</para>
+
+<section>
+<title>Drawing on the JavaScript Canvas</title>
+<para>
+Several browsers provide a <html:tag>canvas</html:tag> element for
+HTML documents and we can use this and JavaScript to draw within the
+canvas' area within the HTML document.  Information about the API for
+the JavaScript canvas is available at <ulink
+url="https://developer.mozilla.org/en/drawing_graphics_with_canvas"/>
+</para>
+<para>
+The file Rjs.R in <dir>examples/JavaScriptCavas</dir> contains
+the code that implements the device <r:func>jsCanvas</r:func>
+and also a related derived device that creates HTML documents, <r:func>htmlCanvas</r:func>.
+We'll look at the <r:func>jsCanvas</r:func> first.
+It is defined as
+<r:code>
+jsCanvas =
+function(file, dim = c(1000, 800), col = "black", ps = 10, wrapup = writeCode, ...)
+{
+}
+</r:code>
+The <r:arg>file</r:arg> specifies the connection or file name to which
+the generated JavaScript code should be written when the device is
+closed.  This can also be a quoted expression (created by
+<r:func>quote</r:func> or <r:func>expression</r:func>) giving the R
+graphics commands. In this case, the plot will be created and the
+generated code will be returned directly rather than being written to
+a file.
+</para>
+<para>
+The <r:arg>dim</r:arg>, <r:arg>col</r:arg> and <r:arg>ps</r:arg>
+parameters are passed on directly to <r:func>graphicsDevice</r:func>
+to initialize its state.  We'll return to <r:arg>wrapup</r:arg> later,
+but suffice to say that it is called to post-process the generated
+JavaScript code and write it to the connection, if appropriate.
+</para>
+
+<para>
+The body of the <r:func>jsCanvas</r:func> starts by creating
+a list (<r:var>pages</r:var>) in which the generated code for the different plots will be stored,
+with a character vector for each separate plot. The code for the current plot being created is stored in
+<r:var>commands</r:var>. 
+<r:code>
+  pages = list()
+  commands = character()
+</r:code>
+Each of the graphical primitive functions for the device add their code
+to the <r:var>commands</r:var> vector as they are called.
+When the plot is completed, either when the device is closed
+or when we start a new plot, the approriate method
+calls <r:func>endPage</r:func> which moves the code for the current plot 
+from <r:var>commands</r:var> into <r:var>pages</r:var>.
+<r:code><![CDATA[
+  add = function(x)
+    commands <<- c(commands, x)
+
+  endPage = function() {
+      if(length(commands)) {
+         pages[[ length(pages) + 1 ]] <<- commands
+         commands <<- character()
+      }
+  }
+]]></r:code>
+These are helper functions that organize the generated code. We
+now move on to the functions implementing the graphical operations.
+</para>
+<para>
+We start by creating a dummy device
+<r:code>
+  funs = as(dummyDevice(), "RJavaScriptCanvasMethods")
+</r:code>
+We don't implement several of the functions, so we assign them
+the value <r:null/>:
+<r:code>
+  funs@mode = NULL
+  funs@metricInfo = NULL
+  funs@activate = NULL
+  funs@deactivate = NULL
+  funs@deactivate = NULL
+  funs@locator = NULL
+  funs@onExit = NULL
+</r:code>
+</para>
+<para>
+We can specify the important device settings such as initial
+color and point size directly via <r:func>graphicsDevice</r:func>
+and in our <r:func>jsCanvas</r:func>.
+However, we might also want to specify addition device settings.
+We can do this after the call to <r:func>graphicsDevice</r:func>
+using the <r:class>DevDescPtr</r:class> object it returns.
+Alternatively, we can have R call an <r:func>initDevice</r:func>
+function we provide and this is called after we create the device
+and set its methdods, but before the device is passed back to the
+R graphics engine to initialize the state, e.g. the <r:func>par</r:func>
+settings.
+So we might have a function of the form:
+<r:function>
+  funs@initDevice = function(dev) {
+
+       # The all important parameter to set ipr to get the plot region with adequate margins
+    dev$ipr = rep(1/72.27, 2)
+    dev$cra = rep(c(6, 13)/12) * 10
+    dev$canClip = TRUE
+    dev$canChangeGamma = TRUE
+    dev$startgamma = 1
+    dev$startps = 10
+    dev$startcol = as("black", "RGBInt")
+  }
+</r:function>
+</para>
+<para>
+Now we move on to the functions that actually generate content.
+We'll start with drawing a line. 
+We are passed the coordinates of the two end points,
+the current graphical context and the device.
+We generate JavaScript code to set the JavaScript drawing
+parameters/context and then draw the line.
+We do this by creating  path, moving to the starting point
+and drawing a line to the end point.
+<r:function>
+funs@line = function(x1, y1, x2, y2, context, dev) {
+    add(c("// line",
+          "ctx.beginPath();",
+          setContext(context),
+          sprintf("ctx.moveTo(%s, %s);", as.integer(x1), as.integer(y1)),
+          sprintf("ctx.lineTo(%s, %s);", as.integer(x2), as.integer(y2)),
+          "ctx.stroke();"))
+}
+</r:function>
+The code is appended to <r:var>commands</r:var> via the <r:func>add</r:func>.
+Since this is a shared vector (as is <r:var>pages</r:var>), we
+define the <r:func>add</r:func> function in the scope of our 
+call to <r:func>jsCanvas</r:func>, and we define our 
+graphics operator functions in that same lexical scope to be able to access
+<r:func>add</r:func>.
+</para>
+<para>
+The function <r:func>setContext</r:func> takes the R graphics context
+(of class <r:class>R_GE_gcontextPtr</r:class>) and generates 
+JavaScript code to set the JavaScript graphics context accordingly.
+Since this just returns the generated code and it is then passed
+to <r:func>add</r:func>, the <r:func>setContext</r:func> function
+does not need access to <r:var>commands</r:var> and so is defined
+outside of <r:func>jsCanvas</r:func>.
+We'll return to it later as  it illustrates some additional facilities
+of <omg:pkg>RGraphicsDevice</omg:pkg> that are useful.
+</para>
+
+<para>
+To draw a rectangle, we can use the built-in JavaScript functions
+<js:func>strokeRect</js:func> or <js:func>fillRect</js:func>.
+The former draws just the border and the latter fills in the entire area.
+Which we  use depends on whether the <r:slot>fill</r:slot> graphics
+parameter in R is set. We determine this by 
+checking whether the <r:slot>fill</r:slot> field 
+corresponds to the "color" transparent. The
+<r:func>isTransparent</r:func> function hides the details.
+<r:code>
+  funs@rect = function(x1, y1, x2, y2, context, dev) {
+    op = if(!isTransparent(context$fill))  "fillRect" else "strokeRect"
+
+    add(c("// rect",
+          setContext(context),
+          sprintf("ctx.%s(%d, %d, %d, %d);",
+                     op,
+                     as.integer(min(x1, x2)), as.integer(min(y1, y2)),
+                     abs(as.integer(x2 - x1)), abs(as.integer(y2 - y1)))))
+  }
+</r:code>
+</para>
+
+<para>
+The remainder of the graphical operations are similar,
+except for those related to text. These are often quite tricky
+as we have to deal with different fonts and computing
+the dimensions of the rendered string and even rotating the text
+and working with that.  We have not taken the time to make this
+pretty for our prototype.  Indeed, this is an area where the
+JavaScript canvas is quite weak. We use Jim Studt's 
+drawing of Hershey fonts for the moment.
+You can find the code and more information at 
+<ulink url="http://www.federated.com/~jim/canvastext/"/>.
+</para>
+<para>
+To handle text, we implement both the <r:func>text</r:func>
+and <r:func>strWidth</r:func> functions.
+We do the simplest thing for computing the width of the string
+which is to multiply the number of characters by the current
+font size and the character expansion setting. This is done via
+the following function:
+<r:function>
+  funs@strWidth = function(str, gcontext, dev) {
+     nchar(str) * max(10, gcontext$ps) * gcontext$cex
+  }
+</r:function>
+Here we see that we are accessing the current point size and
+character expansion from the <r:arg>gcontext</r:arg>
+parameter. Rendering the text is similar to drawing
+a line or circle. For the JavaScript device, we ignore
+the rotation and horizontal adjustment for now.
+</para>
+
+<para>
+There are two other functions that are important to implement.
+The first of these is <r:func>newPage</r:func>
+and this is called when the R graphics engine is starting a new plot.
+For our device, this is when we move any generated code in <r:var>commands</r:var>
+into the <r:var>pages</r:var> list.  So we call <r:func>endPage</r:func>:
+<r:function>
+  funs@newPage = function(gcontext, dev) {
+     endPage()
+  }
+</r:function>
+The second function is <r:func>close</r:func> which is invoked when we
+close the R graphics device. This too much take care of moving any
+generated code into <r:var>pages</r:var>. But it must also output all
+the generated.  Here we call the function that was specified via the
+<r:arg>wrapup</r:arg> parameter.  By default, this is an external
+helper function <r:func>writeCode</r:func> and it is passed the list
+of generated plot commands (<r:var>pages</r:var>), the
+<r:arg>file</r:arg> argument and any additional arguments provided via
+the <r:dots/> mechanism.
+<r:func>writeCode</r:func> turns the code for each plot
+into a separate JavaScript function, adding some initialization JavaScript 
+commands to retrieve the JavaScript graphics context from the associated HTML
+canvas. Then it writes these JavaScript function definitions to the specified connection.
+ </para>
+
+
+<section>
+<title>Displaying the JavaScript</title>
+<para>
+This graphics device merely generates the JavaScript code that can be
+run to display the plot(s). 
+We do this in a Web browser and we do it by having the JavaScript code
+be included in an HTML document.  
+The file <file>template.html</file> provides, as the name suggests, a
+template HTML document that you can use. 
+We can generate the JavaScript code for the plot with a command something like
+<r:code>
+jsCanvas("myPlot.js", c(500, 500))
+ library(maps)
+ map('usa')
+dev.off()
+</r:code>
+Then we can edit the <file>template.html</file> file.
+We add a <html:tag>script</html:tag> element to reference the newly
+generated <file>myPlot.js</file> file.
+We also set the identifier for the canvas to correspond to the value
+used in the JavaScript function we generated.
+Finally, we add a call to that function in the 
+<html:attr>onload</html:attr> attribute of the <html:tag>body</html:tag> element.
+<programlisting lang="html">
+&lt;!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN"&gt;
+&lt;html&gt; &lt;head&gt;
+&lt;script type="application/x-javascript" src="canvastext.js"&gt;&lt;/script&gt;
+<codeEmphasis>&lt;script type="application/x-javascript" src="myPlot.js"&gt;&lt;/script&gt;</codeEmphasis>
+&lt;title&gt;Example of the Canvas&lt;/title&gt;
+&lt;/head&gt;
+
+&lt;body onload="<codeEmphasis>rdraw()</codeEmphasis>"&gt;
+
+&lt;canvas id="<codeEmphasis>canvas</codeEmphasis>" width="1000" height="800" &gt;
+  No support for JavaScript canvas
+&lt;/canvas&gt;
+
+&lt;/body&gt;
+&lt;/html&gt;
+</programlisting>
+</para>
+
+<para>
+This isn't very arduous, but it is tedious.
+We can have R do this for us and that is what the
+derived graphics device function <r:func>htmlCanvas</r:func>
+does for us. This is easily defined as
+<r:function>
+htmlCanvas =
+function(file, dim = c(1000, 800), template = "template.html")
+{
+  jsCanvas(file, dim, wrapup = htmlWrapup, template = template, dim)
+}
+</r:function>
+It is essentially just a call to <r:func>jsCanvas</r:func>, but the
+key is that we provide our own function to do the
+<r:arg>wrapup</r:arg> and emit the generated code.  This
+<r:func>htmlWrapup</r:func> function will create an HTML document with
+the code inside it.  This function will read the template HTML file
+and will use the existing <html:tag>canvas</html:tag> element and its
+<xml:attr>id</xml:attr> attribute value when generating the JavaScript
+code.  It will add the <html:tag>script</html:tag> element and insert
+the code directly into that element rather than keeping it in a
+separate file.  Then it updates the <html:tag>body</html:tag>'s
+<html:attr>onload</html:attr> attribute.  It will also set the width
+and height attributes of the canvas element to match the dimensions of
+the graphics device.
+</para>
+<para>
+So we can now use this in calls of the form
+<r:code>
+library(maps)
+htmlCanvas("usa.html")
+ map('usa')
+dev.off()
+</r:code>
+</para>
+<para>
+If we generate more than one plot, the <r:func>htmlWrapup</r:func> 
+handles this by adding new canvas elements,
+giving the different identifiers, using these when generating
+the JavaScript functions and adding calls to all of them
+in the <html:attr>onload</html:attr> attribute.
+</para>
+</section>
+
+
+<section>
+<title>The <r:class>R_GE_gcontext</r:class> classes</title>
+<para>
+We mentioned the <r:func>setContext</r:func> function above.
+This accesses the values from R's graphics context and 
+sets the corresponding fields in the JavaScript graphics context.
+Most of the values are pretty straightforward.
+The point size is an integer; similarly, line width and line type
+are integers. 
+</para>
+<para>
+The graphics context contains the drawing color and the filling color.
+These are represented as integers and interpreted in a specific
+manner by R. See the file <file>GraphicsDevice.h</file> for more information
+about the meanings of the different bytes. 
+To make things simpler (we hope), we have provided two classes in the
+<omg:pkg>RGraphicsDevice</omg:pkg>. These allow us to convert
+the integer to a string when interpreting the integer and using
+it in another system, and to convert from a string to an integer
+when specifying a color for R to use.
+These classes are named <r:class>RGB</r:class> and <r:class>RGBInt</r:class>.
+We can use them via regular coercion.
+For example, 
+<r:code>
+  as(gcontext$col, "RGB")
+</r:code>
+converts the color in R's graphics context to a string. This might
+be a named color such as "red" or "yellow" or an hexadecimal RGB string,
+e.g. "#FF882300". The extra digits give the alpha level for the degree of transparency.
+If we want to set a color in R, we can use RGB strings or named colors and
+convert them to an integer with, e.g.
+<r:code>
+  as("red", "RGBInt")
+<r:output>
+An object of class "RGBInt"
+[1] 4278190335
+</r:output>
+</r:code>
+</para>
+<para>
+The <r:slot>lend</r:slot> and <r:slot>ljoin</r:slot> fields 
+are like integers, but have a small set of possible values.
+They correspond to enumerated constants in C and we map
+these into <r:class>EnumValue</r:class>s in R.
+(For now, you should coerce them yourself as the C code does not
+explicitly do this at present but will in the future.)
+If we look at this value, we might see something like
+<r:code>
+as(gcontext$lend, "R_GE_lineend")
+<r:output>
+             GE_ROUND_CAP
+R_GE_lineend            1
+</r:output>
+</r:code>
+The name is the value is the important thing to note. This 
+is the human-readable name and the value we should use.
+If we want to set the value for the line ending, we should
+use this name. We can do this in either of the following ways:
+<r:code>
+ gcontext$lend = "GE_ROUND_CAP"
+ gcontext$lend = GE_ROUND_CAP
+</r:code>
+The difference is simply that in the first case, we are coercing
+the name to an instance of the <r:class>R_GE_lineend</r:class> class,
+and in the second, we already have an actual R variable with the corresponding
+name that is an instance of that class. So we typically use the second approach
+when setting the value.
+For accessing the value and using in, for example, JavaScript code, we need
+to map the name to the corresponding value in Java.
+JavaScript uses "round", "butt" and "square".
+We can map our values of "GE_ROUND_CAP", "GE_BUTT_CAP" and "GE_SQUARE_CAP" to these
+in whatever way we think best. In our JavaScript device, we use string
+manipulation in the <r:func>jsLineCap</r:func> function.
+We do the same for line joins.
+</para>
+
+<para>
+The final part of the R graphics context object that needs some
+explanation is the font information.  The <r:slot>fontface</r:slot> is
+an integer.  0 corresponds to plain, 1 to italic and 3 to bold.  The
+<r:slot>fontfamily</r:slot> is a character vector of length 201.  Each
+element is a single character. Look at the C code in
+<r:pkg>grDevices</r:pkg> package for more information on how this is
+interpreted.
+</para>
+</section>
+
+<para>
+We have used the approach of creating a sequence of JavaScript
+commands that render the plot.  It is valuable to instead create
+objects that correspond to the graphical elements and render those.
+While the visual result is the same, the objects can be
+programmatically manipulated after they have been created. We can hide
+objects, change their appearance, move them in animations and allow
+the viewer to modify them with GUI controls.
+To be able to do this, we need to be able to a) create objects,
+and b) associate the objects in the plot with the different
+elements of the plot, e.g. axes, tick marks, title, data points.
+One of the benefits of doing this in the R language is that
+we can examine the call stack via <r:func>sys.calls</r:func> and
+this allows us, albeit in an ad hoc manner, to determine 
+from where the drawing operations were called and to which part of the plot
+they correspond.
+</para>
+</section>
+
+<section>
+<title>SVG Device</title>
+<para>
+R provides a rich Cairo-based graphics device and there are two
+C-level graphics devices that generate SVG.  Also, we can annotate SVG
+generated from the Cairo-based device using
+<omg:pkg>SVGAnnotation</omg:pkg>.
+However, as an illustration and also because we can do more things within R
+than at the C-level, there is a very simple implementation of an SVG graphics device
+in the package in <dir>examples/SVG</dir>. 
+</para>
+</section>
+
+</section>
+
+
+<section>
+<title>The <r:func>size</r:func> operation</title>
+<para>
+A graphics device has a <r:func>size</r:func> method/operation
+and it is expected to return information about its
+location and dimensions. In C, it is passed
+references to 4 numbers and is expected to fill these in.
+In this interface, we are also passed references to 4 C-level 
+number data types and expected to fill them in.
+We do this by treating the objects as if they are regular
+numeric vectors and setting the first value of each.
+So our default size function might be
+<r:function>
+size = 
+function(left, right, bottom, top, dev) {
+  left[1] = 0
+  right[1] = dev$right
+  bottom[1] = dev$bottom
+  top[1] = dev$right
+}
+</r:function>
+We might allow the function to return a numeric vector of length 4 and
+have the C code insert the values into the corresponding C references.
+</para>
+
+</section>
+
+<!--
+<para>
+She would start with a function that created a new graphics device.  This would take the
+initialization values such as the background, the dimensions of the
+graphics device (width and height).  This function would set the state
+of the graphics device in local R variables (or in a C data
+structure).  This creation function would also construct the C-level
+structure representing the graphics device (a DevDesc instance) and
+provide R functions (or C routines) that implement the
+different methods of the graphics device.
+</para>
+-->
+<section>
+<title>Future Directions</title>
+<para>
+We have provided a relatively straightforward one-to-one mapping of
+the internal code to R functions.  There are additional features we
+could add and different idioms and interfaces we could implement.
+We will at some stage make additional internal R graphics functionality available
+so that these can be used by an R programmer implementing an R graphics device.
+</para>
+<para>
+We will also make it possible to dynamically modify the C routines
+that implement an internal graphics device, e.g. the C routine that is
+called to draw a line. While we have provided routines that call the
+corresponding R function in the device, it is useful to be able to
+implement some of these primitives with R functions and others with C
+routines and mix code across the languages.
+This is quite easy and amounts to not removing the function
+pointers from the code we generate in the <file>tu.R</file> script.
+</para>
+<para>
+We can avoid lexical scoping by maintaining a state object.  We can
+create an object which represents the current state of the device and
+store it in the device's state slot.  Each of our graphics engine
+primitive functions have access to this and can both query and set it.
+This can be done now.
+</para>
+<para>
+We have specified the functions to use to implement the graphical primitives.
+This is the most direct way of doing things. Another approach
+is to use generic functions for these graphical primitives.
+Then the generic graphics device would invoke the appropriate
+method based on the class of the graphics device.
+To define a device, we would define a sub-class of <r:class>DevDescPtr</r:class> and
+arrange for the C code that invokes our existing proxy C routines
+to convert the instances to that type of object.  (This object
+could be stored in the device specific state field.)
+We can implement this with the existing  direct framework
+and the benefit is that this is a more common and familiar object-oriented
+programming approach for R programmers.
+Other than that, it is not necessary.
+</para>
+</section>
+
+<section>
+<title></title>
+
+<para>
+We can get the functions that implement a device using the
+<r:var>devDesc</r:var> field of the device object.
+We'll illustrate this with the FlashMXML device.
+
+<r:code>
+library(FlashMXML)
+dev = mxmlDevice("/tmp/foo.mxml", compile = FALSE)
+my = dev$deviceSpecific()
+class(my)
+as(my, "RDevDescMethods")
+</r:code>
+
+We actually want to get the state of the device
+including any additional functions. In this regard, we should have
+the deviceSpecic object be set to an R object
+</para>
+</section>
+
+
+<ignore>
+<para>
+signatures
+<r:code>
+txt = mapply(function(x, id) {
+               tmp = sapply(x@type@parameters, function(x) RGCCTranslationUnit:::getRTypeName(x@type))
+               m = c(DevDescPtr = "pDevDesc", "R_GE_gcontextPtr" = "pGEcontext", ANY = "SEXP")
+               i = match(tmp, m)
+               tmp[!is.na(i)] = names(m)[i[!is.na(i)]]
+               paste(id, "(", paste(tmp, collapse = ', '), ") #", length(tmp))
+             }, funs, names(funs))
+</r:code>
+</para>
+</ignore>
+</article>

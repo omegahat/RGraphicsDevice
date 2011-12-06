@@ -1,0 +1,42 @@
+<topics>
+<topic>
+<items>
+
+<item>
+getAxes fails on hexbin plot
+
+<r:code>
+e = test(plot(hexbin(rnorm(1000), rnorm(1000))))
+x = getAxes(e)
+length(x)  # 0
+</r:code>
+
+</item>
+
+<item>
+When we run
+e = test(xyplot(mpg ~ wt | cyl, mtcars))
+we are not seeing all of the tick labels on the 
+horizontal axis.
+</item>
+
+<item>
+getLatticeComponents
+needs to separate the elements of the 
+axes, etc. from the strips.
+</item>
+
+<item>
+Merge with another device to produce
+structured collections of graphical elements
+into high-level objects, e.g. Axis objects,
+e.g. Take the FlashMXML device and produce
+the action script code, but then go further to assemble
+them into data region, axis, axis, title objects.
+Define classes in FlashMXML.
+
+</item>
+
+</items>
+</topic>
+</topics>

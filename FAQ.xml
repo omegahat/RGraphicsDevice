@@ -1,0 +1,52 @@
+<faq xmlns:r="http://www.r-project.org">
+
+<q>
+From within one method, I need to access some of the other "methods" (i.e. R functions)
+that are being used to implement the device, e.g.
+from within the circle method, I want to call the polygon method.
+<a>
+<para>
+There are two ways to do this. One is to access the <r:arg>deviceSpecific</r:arg>
+field of the device pointer, i.e. the <r:class>DevDescPtr</r:class>.
+Then we can access an individual element
+via the $ operator, or we can coerce the reference toa <r:class>RDevDescMethods</r:class> object:
+<r:code>
+circle = function(x, y, r, context, dev) {
+
+  dev$deviceSpecific$polygon
+
+  as(dev$deviceSpecific, "RDevDescMethods")@polygon
+  
+}
+</r:code>
+</para>
+<para>
+Alternatively, you should create the "method" functions 
+as part of a closure and then they will be able to 
+see each other. For example, 
+
+<r:code>
+myDeviceMethods =
+function()
+{
+   polygon = function(n, x, y, context, dev) {
+       # whatever
+   }
+
+    ...
+
+   circle  = function(x, y, r, context, dev) {
+     polygon(10, rnorm(10), rnorm(10), ....)
+   }
+}
+</r:code>
+In this setup, the symbol <r:var>polygon</r:var>
+is visible within the call to <r:func>circle</r:func>
+because the call frame has a  parent environment
+that comes from the call to <r:func>myDeviceMethods</r:func>.
+
+</para>
+</a>
+</q>
+
+</faq>

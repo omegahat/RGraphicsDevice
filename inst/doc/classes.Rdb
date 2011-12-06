@@ -1,0 +1,49 @@
+<?xml version="1.0"?>
+<article xmlns:r="http://www.r-project.org"
+         xmlns:xi="http://www.w3.org/2003/XInclude">
+
+<articleinfo>
+
+<title></title>
+
+<author><firstname>Duncan</firstname><surname>Temple Lang</surname>
+  <affiliation><orgname>University of California at Davis</orgname>
+               <orgdiv>Department of Statistics</orgdiv>
+  </affiliation>
+</author>
+</articleinfo>
+
+<section>
+<title></title>
+
+<para>
+<r:class>RDevDescMethods</r:class> is the class
+for representing the collection of R functions that will be used
+to implement the methods of a native graphics device structure.
+</para>
+<para>
+The C-level structure representing a "running" device, i.e. one that is open,
+is of class  <r:class>DevDescPtr</r:class>.
+This is passed as the last argument in each invocation of the R
+functions implementing the device.
+</para>
+
+
+<para>
+A function in <r:class>RDevDescMethods</r:class> is called
+when the corresponding C method is invoked by the graphics engine.
+Along with details about the graphics request (e.g. x, y coordinate),
+each invocation also has a <r:class>R_GE_gcontextPtr</r:class> object
+in the collection of arguments. This is a pointer/reference to 
+the C-level structure representing information about the 
+current state of the graphics context in the graphics engine for this device.
+This has fields specifying the current color and fill color;
+line width, type and height; line ending, join and mitre settings;
+character expansion and font/point size and font type and family;
+and the gamma correction. This is run-time information
+that (may) changes across calls.
+</para>
+
+
+</section>
+</article>
