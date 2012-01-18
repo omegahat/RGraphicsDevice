@@ -1014,7 +1014,13 @@ R_free_DevDescPtr_finalizer (SEXP val)
 {
     DevDesc * ans = NULL;
     ans = ( DevDesc * ) R_ExternalPtrAddr(val);
-     if(ans) { fprintf(stderr, "freeing DevDesc  %p\n", ans); free(ans);}
+     if(ans) { 
+#ifdef DEBUG_R_RUNTIME
+          fprintf(stderr, "freeing DevDesc  %p\n", ans); 
+#endif
+
+          free(ans);
+     }
 } 
 #ifdef __cplusplus
 extern "C"
@@ -1025,7 +1031,12 @@ R_free_DevDescPtr (SEXP val)
     DevDesc * ans = NULL;
     ans =  (DevDesc *) R_getNativeReference(val, "DevDescPtr", NULL); ;
     
-     if(ans) { fprintf(stderr, "freeing DevDesc  %p\n", ans); free(ans);}
+     if(ans) { 
+#ifdef DEBUG_R_GRAPHICS_DEVICE
+         fprintf(stderr, "freeing DevDesc  %p\n", ans); 
+#endif
+         free(ans);
+     }
     return(ScalarLogical(ans ? TRUE : FALSE));
 } 
 SEXP

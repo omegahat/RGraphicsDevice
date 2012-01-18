@@ -34,7 +34,9 @@ R_make_var_reference(void *ref, const char * const type)
     SEXP klass = MAKE_CLASS("VariableReference");
     PROTECT(klass);
     PROTECT(ans = NEW(klass));
+#ifdef DEBUG_R_RUNTIME
     fprintf(stderr, "variable reference %p\n", ref);
+#endif
     SET_SLOT(ans, Rf_install("ref"), R_createNativeReference(ref, type, type));
     UNPROTECT(2);
 

@@ -447,7 +447,12 @@ R_free_R_GE_gcontextPtr_finalizer (SEXP val)
 {
     R_GE_gcontext * ans = NULL;
     ans = ( R_GE_gcontext * ) R_ExternalPtrAddr(val);
-     if(ans) { fprintf(stderr, "freeing R_GE_gcontext  %p\n", ans); free(ans);}
+     if(ans) { 
+#ifdef DEBUG_R_GRAPHICS_DEVICE
+         fprintf(stderr, "freeing R_GE_gcontext  %p\n", ans); 
+#endif
+         free(ans);
+     }
 } 
 #ifdef __cplusplus
 extern "C"
@@ -458,7 +463,12 @@ R_free_R_GE_gcontextPtr (SEXP val)
     R_GE_gcontext * ans = NULL;
     ans =  (R_GE_gcontext *) R_getNativeReference(val, "R_GE_gcontextPtr", NULL); ;
     
-     if(ans) { fprintf(stderr, "freeing R_GE_gcontext  %p\n", ans); free(ans);}
+     if(ans) { 
+#ifdef DEBUG_R_GRAPHICS_DEVICE
+        fprintf(stderr, "freeing R_GE_gcontext  %p\n", ans); 
+#endif
+        free(ans);
+     }
     return(ScalarLogical(ans ? TRUE : FALSE));
 } 
 SEXP

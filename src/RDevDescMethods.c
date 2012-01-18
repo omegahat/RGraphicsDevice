@@ -858,7 +858,12 @@ R_free_RDevDescMethodsPtr_finalizer (SEXP val)
 {
     struct  RDevDescMethods * ans = NULL;
     ans = ( struct  RDevDescMethods * ) R_ExternalPtrAddr(val);
-     if(ans) { fprintf(stderr, "freeing RDevDescMethods  %p\n", ans); free(ans);}
+     if(ans) { 
+#ifdef DEBUG_R_GRAPHICS_DEVICE
+         fprintf(stderr, "freeing RDevDescMethods  %p\n", ans); 
+#endif
+         free(ans);
+     }
 } 
 #ifdef __cplusplus
 extern "C"
@@ -869,7 +874,12 @@ R_free_RDevDescMethodsPtr (SEXP val)
     struct  RDevDescMethods * ans = NULL;
     ans =  (struct  RDevDescMethods *) R_getNativeReference(val, "RDevDescMethodsPtr", NULL); ;
     
-     if(ans) { fprintf(stderr, "freeing RDevDescMethods  %p\n", ans); free(ans);}
+     if(ans) { 
+#ifdef DEBUG_R_GRAPHICS_DEVICE
+        fprintf(stderr, "freeing RDevDescMethods  %p\n", ans); 
+#endif
+        free(ans);
+     }
     return(ScalarLogical(ans ? TRUE : FALSE));
 } 
 SEXP
