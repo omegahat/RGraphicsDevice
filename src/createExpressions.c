@@ -4,7 +4,7 @@ SEXP
 createCircleCall(SEXP fun)
 {
 
-    SEXP e, p, r_ans;
+    SEXP e, p;
     
     PROTECT(p = e = allocVector(LANGSXP, 6 ));
     SETCAR(p, fun ); p = CDR(p);

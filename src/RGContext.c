@@ -355,7 +355,6 @@ R_R_GE_gcontextPtr_set_fontfamily (SEXP r_obj , SEXP r_value  )
     R_GE_gcontext *obj ;
     obj = ( R_GE_gcontext * )  R_getNativeReference(r_obj, "R_GE_gcontext", NULL) ;
      {
-       int i;
        // convertRCharacterToCharArray(obj->fontfamily, r_value, 201);
        sprintf(obj->fontfamily, "%s", CHAR(STRING_ELT(r_value, 0)));
      }
@@ -402,7 +401,6 @@ coerce_R_GE_gcontext_R_GE_gcontextPtr ( SEXP r_from,  R_GE_gcontext * ans )
     ans->fontface = asInteger( tmp );
     tmp = GET_SLOT(r_from, Rf_install("fontfamily"));
      {
-       int i;
        convertRCharacterToCharArray(ans->fontfamily, tmp, 201);
      }
     return(ans);

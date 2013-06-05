@@ -20,7 +20,6 @@ Collate: classes.R  rgb.R
          devDescMethods.R RDevDesc.R
          gd.R zClasses.R
          GEDevDesc.R
-
 Extra:         withType.R
 
 
