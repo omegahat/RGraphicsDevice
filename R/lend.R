@@ -1,5 +1,5 @@
 if(!is.null(getClassDef('EnumValue'))) {
-setClass('R_GE_lineend', contains = 'EnumValue', prototype = structure(as.integer(NA), names = "?"))
+setClass('R_GE_lineend', contains = 'EnumValue', prototype = structure(as.integer(NA)))  #, names = "?"))
 `R_GE_lineendValues` = EnumDef('R_GE_lineend', structure(as.integer(c(1,
 2,
 3)),
