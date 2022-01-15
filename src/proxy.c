@@ -117,7 +117,7 @@ Rboolean
 R_locator ( double * r1, double * r2, pDevDesc r3 )
 {
     SEXP e, p, r_ans;
-    Rboolean ans ;
+    Rboolean ans = 0;
     
     
     if( ((RDevDescMethods*) ( r3->deviceSpecific))->locator == NULL) return(ans) ;
@@ -312,7 +312,7 @@ double
 R_strWidth ( const char * r1, const pGEcontext r2, pDevDesc r3 )
 {
     SEXP e, p, r_ans;
-    double ans ;
+    double ans = 0.0;
     
     
     if( ((RDevDescMethods*) ( r3->deviceSpecific))->strWidth == NULL) return(ans) ;
@@ -376,7 +376,7 @@ Rboolean
 R_newFrameConfirm ( pDevDesc r1 )
 {
     SEXP e, p, r_ans;
-    Rboolean ans ;
+    Rboolean ans = 0;
     
     
     if( ((RDevDescMethods*) ( r1->deviceSpecific))->newFrameConfirm == NULL) return(ans) ;
@@ -420,7 +420,7 @@ double
 R_strWidthUTF8 ( const char * r1, const pGEcontext r2, pDevDesc r3 )
 {
     SEXP e, p, r_ans;
-    double ans ;
+    double ans = 0.;
     
     
     if( ((RDevDescMethods*) ( r3->deviceSpecific))->strWidthUTF8 == NULL) return(ans) ;
