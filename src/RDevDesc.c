@@ -683,7 +683,7 @@ R_DevDescPtr_set_startcol (SEXP r_obj , SEXP r_value  )
 {
     DevDesc *obj ;
     int value ;
-    unsigned int ival;
+    // unsigned int ival;
     value = (int) ( (unsigned int) asReal( r_value ));
     obj = ( DevDesc * )  R_getNativeReference(r_obj, "DevDesc", NULL) ;
     obj -> startcol = value;

@@ -24,7 +24,7 @@ R_createGraphicsDevice(SEXP methods, SEXP devName, SEXP dim,
     R_CheckDeviceAvailable();
     BEGIN_SUSPEND_INTERRUPTS {
 	pDevDesc dev;
-	unsigned int tmp;
+	//unsigned int tmp;
 	/* Allocate and initialize the device driver data */
 	if (!(dev = (pDevDesc) calloc(1, sizeof(DevDesc)))) return ScalarLogical(FALSE);
 
@@ -82,8 +82,8 @@ R_str2col(SEXP r_val)
     PROTECT(ans = NEW_NUMERIC(len));
     for(i = 0; i < len; i++) {
 	unsigned int ival;
-	int tmp;
-	tmp = R_GE_str2col(CHAR(STRING_ELT(r_val, i)));
+	//int tmp;
+	//tmp = R_GE_str2col(CHAR(STRING_ELT(r_val, i)));
 	ival = R_GE_str2col(CHAR(STRING_ELT(r_val, i)));
         REAL(ans)[i] = ival;
     }
